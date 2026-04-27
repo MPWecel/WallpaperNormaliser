@@ -2,7 +2,7 @@
 
 # WallpaperNormaliserApp - Core Domain Models
 
-## 1. Enums
+## 1. Enums::
 	```csharp
 		public enum EFileFormat			{ Unknown=0,	Jpeg=1,		Png=2,			Bmp=3,			Gif=4, 					Tiff=5,					Webp=6 }
 		public enum LogSeverity			{ Trace=0,		Debug=1,	Information=2,	Warning=3,		Error=4,				Critical=5 }
@@ -11,7 +11,7 @@
 		public enum ProcessingStatus	{ Pending=0,	Running=1,	Completed=2,	Skipped=3,		Failed=4,				Cached=5 }
 	```
 	
-## 2. Value Objects
+## 2. Value Objects::
 	```csharp
 		public sealed record FileFormatInfo(EFileFormat Format)
 		{
@@ -39,7 +39,7 @@
 		}
 	```
 	
-## 3. File Context
+## 3. File Context::
 	```csharp
 		public sealed record FileContext(
 											string FileName,
@@ -52,7 +52,7 @@
 										);
 	```
 	
-## 4. Processing Models
+## 4. Processing Models::
 	```csharp
 		public sealed record Resolution(int Width, int Height);
 		
@@ -77,7 +77,7 @@
 												);
 	```
 	
-## 5. Logging Models
+## 5. Logging Models::
 	```csharp
 		public sealed record LogEntry(
 										Guid Id,
@@ -100,7 +100,6 @@
 	```
 	
 ## 6. Manifest Models::
-	
 	```csharp
 		public sealed record ManifestResultEntry(
 													string FileName,
@@ -129,20 +128,17 @@
 											bool WatchEnabled,
 											int DebounceMilliseconds
 										);
-		
 		public sealed record CacheSettings(
 											bool Enabled,
 											int MaxItems,
 											int ExpirationMinutes
 										);
-		
 		public sealed record LoggingSettings(
 												bool FileLoggingEnabled,
 												bool DatabaseLoggingEnabled,
 												int RetentionDays,
 												int MaxRows
 											);
-		
 		public sealed record AppSettings(
 											string RootDirectory,
 											Resolution DefaultResolution,
@@ -154,7 +150,6 @@
 	```
 	
 ## 8. Scan Models::
-	
 	```csharp
 		public sealed record ScanOptions(
 											string InputDirectory,
@@ -162,7 +157,6 @@
 											bool RaiseEvents,
 											bool ComputeHashes
 										);
-		
 		public sealed record ScanItem(
 										string FileName,
 										string RelativePath,
@@ -171,7 +165,6 @@
 										long SizeBytes,
 										DateTimeOffset LastWriteTimeUtc
 									);
-		
 		public sealed record ScanResult(
 											IReadOnlyList<ScanItem> Items,
 											int FilesFound,
@@ -181,7 +174,6 @@
 	```
 	
 ## 9. Output Models::
-	
 	```csharp
 		public sealed record OutputWriteRequest(
 													string TargetDirectory,
@@ -189,7 +181,6 @@
 													byte[] Bytes,
 													OverwriteMode Mode
 												);
-		
 		public sealed record OutputWriteResult(
 													bool Success,
 													string FullPath,
@@ -220,7 +211,6 @@
 	```
 	
 ## 11. Validation Rules::
-	
 	>	JpegQuality:				1..100
 	>	Resolution width/height:	> 0
 	>	RootDirectory:				required
@@ -237,3 +227,5 @@
 	>	DateTimeOffset in contracts
 	>	Validate values:	at boundaries
 	>	Prefet constructor validation or FluentValidation on every change
+	
+
