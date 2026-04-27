@@ -28,19 +28,19 @@
 ---------------------------------------------------------------------------------------------------------------------------------
 
 ## 3. Working Directory Structure::
-	```text
-		ROOT/
-		├── INPUT/
-		├── OUTPUT/
-		└── MANIFEST/
-	```
+```text
+	ROOT/
+	├── INPUT/
+	├── OUTPUT/
+	└── MANIFEST/
+```
 	
-	Example:
-	```text
-		INPUT/cat.png
-		OUTPUT/cat_png/cat_1920x1080.jpg
-		MANIFEST/cat.json
-	```
+Example:
+```text
+	INPUT/cat.png
+	OUTPUT/cat_png/cat_1920x1080.jpg
+	MANIFEST/cat.json
+```
 	
 ---------------------------------------------------------------------------------------------------------------------------------
 
