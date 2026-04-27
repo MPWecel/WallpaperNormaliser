@@ -60,4 +60,7 @@ nunit-*.xml
 APPLICATION_WORKING_DIRECTORY/
 
 # VisualStudio dirs
-.vs\
+.vs/
+
+# github copilot and other junk
+.github/
