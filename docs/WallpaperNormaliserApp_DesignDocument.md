@@ -120,30 +120,30 @@ Example:
 	One manifest per source input.
 	
 	Example:
-	```json
+```json
+	{
+		"sourceFile": 
 		{
-			"sourceFile": 
+			"name": "cat.png",
+			"hash": "sha256...",
+			"metadata": 
 			{
-				"name": "cat.png",
-				"hash": "sha256...",
-				"metadata": 
-				{
-					"width": 2560,
-					"height": 1440,
-					"format": "png"
-				}
-			},
-			"lastProcessedUtc": "2026-04-27T17:31:10Z",
-			"results": 
-			[
-				{
-					"fileName": "cat_1920x1080.jpg",
-					"resolution": "1920x1080",
-					"quality": 100
-				}
-			]
-		}
-	```
+				"width": 2560,
+				"height": 1440,
+				"format": "png"
+			}
+		},
+		"lastProcessedUtc": "2026-04-27T17:31:10Z",
+		"results": 
+		[
+			{
+				"fileName": "cat_1920x1080.jpg",
+				"resolution": "1920x1080",
+				"quality": 100
+			}
+		]
+	}
+```
 	
 ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -158,15 +158,15 @@ Example:
 ---------------------------------------------------------------------------------------------------------------------------------
 
 ## 11. Architecture::
-	```text
-		Solution
-		├── WallpaperNormaliser.Core
-		├── WallpaperNormaliser.Infrastructure
-		├── WallpaperNormaliser.ConsoleUi
-		├── WallpaperNormaliser.WebApi (future)
-		├── WallpaperNormaliser.Blazor (future)
-		└── WallpaperNormaliser.Desktop (future)
-	```
+```text
+	Solution
+	├── WallpaperNormaliser.Core
+	├── WallpaperNormaliser.Infrastructure
+	├── WallpaperNormaliser.ConsoleUi
+	├── WallpaperNormaliser.WebApi (future)
+	├── WallpaperNormaliser.Blazor (future)
+	└── WallpaperNormaliser.Desktop (future)
+```
 	
 	### Core
 		Business logic, contracts, models.
