@@ -22,6 +22,12 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+[Nn][Ee][Tt]8.0/
+[Nn][Ee][Tt]9.0/
+[Nn][Ee][Tt]10.0/
+*.deps.json
+*.pdb
+*.runtimeconfig.json
 
 # .NET Core
 project.lock.json
@@ -58,9 +64,14 @@ nunit-*.xml
 
 # WORKING DIRECTORY
 APPLICATION_WORKING_DIRECTORY/
+APPLICATION_WORKING_DIRECTORY/INPUT
+APPLICATION_WORKING_DIRECTORY/OUTPUT
+APPLICATION_WORKING_DIRECTORY/MANIFEST
+[Dd][Bb]/
 
 # VisualStudio dirs
 .vs/
 
 # github copilot and other junk
 .github/
+copilot-instructions.md
