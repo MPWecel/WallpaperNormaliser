@@ -16,4 +16,11 @@
       <ProjectReference Include="..\WallpaperNormaliser.Core\WallpaperNormaliser.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Persistence\Database\" />
+      <Folder Include="Persistence\Migrations\" />
+      <Folder Include="Persistence\Sql\" />
+      <Folder Include="Persistence\Repositories\" />
+    </ItemGroup>
+
 </Project>
