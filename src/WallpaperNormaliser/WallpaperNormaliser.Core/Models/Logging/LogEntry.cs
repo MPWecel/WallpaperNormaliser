@@ -3,7 +3,7 @@
 namespace WallpaperNormaliser.Core.Models.Logging;
 public sealed record LogEntry(
                                 Guid Id,
-                                DateTimeOffset CreatedAtUtc,
+                                DateTimeOffset CreationDateUtc,
                                 ELogSeverity Severity,
                                 string Category,
                                 string Message,

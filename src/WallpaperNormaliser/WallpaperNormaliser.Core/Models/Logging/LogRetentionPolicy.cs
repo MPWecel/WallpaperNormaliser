@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace WallpaperNormaliser.Core.Models.Logging;
-internal class LogRetentionPolicy
-{
-}
+﻿namespace WallpaperNormaliser.Core.Models.Logging;
+public sealed record LogRetentionPolicy(
+                                            int MaxDays,
+                                            int MaxRows,
+                                            int KeepDays,
+                                            int KeepRows
+                                       );

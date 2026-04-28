@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WallpaperNormaliser.Core.Models.Common;
 
 namespace WallpaperNormaliser.Core.Models.Manifest;
-internal class ManifestResultEntry
-{
-}
+public sealed record ManifestResultEntry(
+                                            string FileName,
+                                            Resolution Resolution,
+                                            int Quality,
+                                            string Hash,
+                                            DateTimeOffset CreationDateUtc
+                                        );

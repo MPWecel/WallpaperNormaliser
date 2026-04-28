@@ -1,4 +1,4 @@
-﻿using WallpaperNormaliser.Core.ValueObjects;
+﻿using WallpaperNormaliser.Core.Models.Common;
 
 namespace WallpaperNormaliser.Core.Models.Scan;
 public sealed record ScanItem(

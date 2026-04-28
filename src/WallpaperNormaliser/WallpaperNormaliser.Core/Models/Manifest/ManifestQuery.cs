@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace WallpaperNormaliser.Core.Models.Manifest;
-internal class ManifestQuery
-{
-}
+﻿namespace WallpaperNormaliser.Core.Models.Manifest;
+public sealed record ManifestQuery(
+                                    string? SourceHash,
+                                    string? FileName,
+                                    int Limit = 100
+                                  );

@@ -1,4 +1,6 @@
-﻿namespace WallpaperNormaliser.Core.Models.Processing;
+﻿using WallpaperNormaliser.Core.Models.Common;
+
+namespace WallpaperNormaliser.Core.Models.Processing;
 public sealed record ProcessingOptions(
                                         Resolution TargetResolution, 
                                         int JpegQuality,

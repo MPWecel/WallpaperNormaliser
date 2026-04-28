@@ -1,4 +1,4 @@
-﻿using WallpaperNormaliser.Core.Models.Processing;
+﻿using WallpaperNormaliser.Core.Models.Common;
 
 namespace WallpaperNormaliser.Core.Models.Settings;
 public sealed record AppSettings(

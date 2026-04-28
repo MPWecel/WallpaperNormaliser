@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace WallpaperNormaliser.Core.Models.Manifest;
-internal class ManifestDocument
-{
-}
+﻿namespace WallpaperNormaliser.Core.Models.Manifest;
+public sealed record ManifestDocument(
+                                        Guid Id,
+                                        string SourceHash,
+                                        string SourceFileName,
+                                        string RelativePath,
+                                        DateTimeOffset CreationDateUtc,
+                                        DateTimeOffset LastUpdateDateUtc,
+                                        IReadOnlyList<ManifestResultEntry> Results
+                                     );

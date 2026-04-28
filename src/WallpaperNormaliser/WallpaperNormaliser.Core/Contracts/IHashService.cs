@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WallpaperNormaliser.Core.Models.Common;
 
 namespace WallpaperNormaliser.Core.Contracts;
-internal interface IHashService
+public interface IHashService
 {
+    Task<string> ComputeAsync(FileContext file, CancellationToken cancellationToken = default);
 }

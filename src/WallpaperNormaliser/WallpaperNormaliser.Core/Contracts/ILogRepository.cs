@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WallpaperNormaliser.Core.Models.Logging;
 
 namespace WallpaperNormaliser.Core.Contracts;
-internal interface ILogRepository
+public interface ILogRepository
 {
+    Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default);
+    Task WriteManyAsync(IEnumerable<LogEntry> entries, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LogEntry>> QueryAsync(LogQuery query, CancellationToken cancellationToken = default);
+    Task<int> CleanupAsync(LogRetentionPolicy policy, CancellationToken cancellationToken = default);
 }

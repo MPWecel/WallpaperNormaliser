@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WallpaperNormaliser.Core.Models.Output;
 
 namespace WallpaperNormaliser.Core.Contracts;
-internal interface IOutputWriter
+public interface IOutputWriter
 {
+    Task<OutputWriteResult> WriteAsync(OutputWriteRequest request, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<OutputWriteResult>> WriteManyAsync(IEnumerable<OutputWriteRequest> requests, CancellationToken cancellationToken = default);
 }

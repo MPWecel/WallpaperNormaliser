@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WallpaperNormaliser.Core.Models.Common;
+using WallpaperNormaliser.Core.Models.Processing;
 
 namespace WallpaperNormaliser.Core.Contracts;
-internal interface IImageProcessor
+public interface IImageProcessor
 {
+    Task<ImageProcessingResult> ProcessAsync(FileContext input, ProcessingOptions options, CancellationToken cancellationToken = default);
 }

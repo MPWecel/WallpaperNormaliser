@@ -1,6 +1,4 @@
-﻿using WallpaperNormaliser.Core.ValueObjects;
-
-namespace WallpaperNormaliser.Core.Contexts;
+﻿namespace WallpaperNormaliser.Core.Models.Common;
 public sealed record FileContext(
                                     string FileName,
                                     string RelativePath,

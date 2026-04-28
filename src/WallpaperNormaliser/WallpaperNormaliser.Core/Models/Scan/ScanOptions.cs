@@ -1,5 +1,4 @@
-﻿
-namespace WallpaperNormaliser.Core.Models.Scan;
+﻿namespace WallpaperNormaliser.Core.Models.Scan;
 
 public sealed record ScanOptions(
                                     string InputDirectory,

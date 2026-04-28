@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WallpaperNormaliser.Core.Models.Settings;
 
 namespace WallpaperNormaliser.Core.Contracts;
-internal interface ISettingsRepository
+public interface ISettingsRepository
 {
+    Task<AppSettings> GetAsync(CancellationToken cancellationToken = default);
+    Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default);
+    Task<string> ExportJsonAsync(CancellationToken cancellationToken = default);
+    Task ImportJsonAsync(string json, CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,5 @@
 ﻿using WallpaperNormaliser.Core.Enums;
-using WallpaperNormaliser.Core.ValueObjects;
+using WallpaperNormaliser.Core.Models.Common;
 
 namespace WallpaperNormaliser.Core.Models.Processing;
 public sealed record ImageProcessingResult(

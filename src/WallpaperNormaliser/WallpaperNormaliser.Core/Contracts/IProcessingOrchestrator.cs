@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using WallpaperNormaliser.Core.Models.Orchestration;
 
 namespace WallpaperNormaliser.Core.Contracts;
-internal interface IProcessingOrchestrator
+public interface IProcessingOrchestrator
 {
+    Task<BatchProcessResult> RunAsync(ProcessRequest request, CancellationToken cancellationToken = default);
 }

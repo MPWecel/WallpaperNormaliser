@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using WallpaperNormaliser.Core.Enums;
 
-namespace WallpaperNormaliser.Core.ValueObjects;
+namespace WallpaperNormaliser.Core.Models.Common;
 public sealed record FileFormatInfo(EFileFormat Format)
 {
     public string Extension 
@@ -39,7 +39,7 @@ public sealed record FileFormatInfo(EFileFormat Format)
             "tif"  => new FileFormatInfo(EFileFormat.Tiff),
             "tiff" => new FileFormatInfo(EFileFormat.Tiff),
             "webp" => new FileFormatInfo(EFileFormat.Webp),
-            _ => (FileFormatInfo?)(null)
+            _ => null
         };
 
     public static FileFormatInfo? FromMimeType(string mimeType)
@@ -53,6 +53,6 @@ public sealed record FileFormatInfo(EFileFormat Format)
             "image/tif"  => new FileFormatInfo(EFileFormat.Tiff),
             "image/tiff" => new FileFormatInfo(EFileFormat.Tiff),
             "image/webp" => new FileFormatInfo(EFileFormat.Webp),
-            _ => (FileFormatInfo?)(null)
+            _ => null
         };
 }

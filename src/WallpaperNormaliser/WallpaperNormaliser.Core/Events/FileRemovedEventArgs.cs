@@ -5,6 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace WallpaperNormaliser.Core.Events;
-internal class FileRemovedEventArgs
+public class FileRemovedEventArgs : EventArgs
 {
 }
