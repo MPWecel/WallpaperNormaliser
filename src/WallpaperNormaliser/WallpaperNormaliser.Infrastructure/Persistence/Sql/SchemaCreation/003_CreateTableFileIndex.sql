@@ -1,4 +1,5 @@
-CREATE TABLE FileIndex
+DROP TABLE IF EXISTS [FileIndex];
+CREATE TABLE [FileIndex]
 (
     [Id] TEXT PRIMARY KEY,
     [SourceHash] TEXT NOT NULL,

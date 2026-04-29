@@ -24,7 +24,6 @@
     <ItemGroup>
       <Folder Include="Processing\" />
       <Folder Include="Persistence\Migrations\" />
-      <Folder Include="Persistence\Sql\" />
     </ItemGroup>
 
 </Project>
