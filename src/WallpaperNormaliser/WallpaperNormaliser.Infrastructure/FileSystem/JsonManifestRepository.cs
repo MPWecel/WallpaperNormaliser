@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Manifest;
 
-namespace WallpaperNormaliser.Infrastructure.Repositories;
+namespace WallpaperNormaliser.Infrastructure.FileSystem;
 public class JsonManifestRepository : IManifestRepository
 {
     public Task<ManifestDocument?> GetByHashAsync(string hash, CancellationToken cancellationToken = default)

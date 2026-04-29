@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WallpaperNormaliser.Infrastructure.Processing;
-internal class ImageSharpProcessor
+namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
+public class SqliteConnectionFactory
 {
 }

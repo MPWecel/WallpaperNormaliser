@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WallpaperNormaliser.Infrastructure.Repositories;
-internal class SqliteLogRepository
+namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
+public class MigrationRunner
 {
 }

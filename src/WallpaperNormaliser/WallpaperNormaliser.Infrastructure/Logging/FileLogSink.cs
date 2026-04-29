@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WallpaperNormaliser.Infrastructure.Repositories;
-internal class SqliteSettingsRepository
+namespace WallpaperNormaliser.Infrastructure.Logging;
+public class FileLogSink
 {
 }
