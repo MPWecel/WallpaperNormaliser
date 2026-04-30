@@ -5,6 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
-public class SqliteRunRepository
+public sealed class SqliteRunRepository
 {
 }

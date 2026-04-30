@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Data;
+using Microsoft.Data.Sqlite;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
-public class SqliteConnectionFactory
+public sealed class SqliteConnectionFactory
 {
+    private readonly string _connectionString;
+    public SqliteConnectionFactory(string connString) => _connectionString = connString;
+
+    public IDbConnection Create() => new SqliteConnection(_connectionString);
 }
