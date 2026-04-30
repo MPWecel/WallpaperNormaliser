@@ -69,7 +69,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Processing\" />
       <Folder Include="Persistence\Migrations\" />
     </ItemGroup>
 

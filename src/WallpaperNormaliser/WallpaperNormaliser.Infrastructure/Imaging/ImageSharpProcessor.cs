@@ -12,6 +12,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
 using WallpaperNormaliser.Core.Contracts;
+using WallpaperNormaliser.Core.Enums;
 using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Processing;
 
@@ -52,7 +53,24 @@ public class ImageSharpProcessor : IImageProcessor
         int posX = (canvas.Width - newWidth) / 2;
         int posY = (canvas.Height - newHeight) / 2;
 
-        throw new NotImplementedException();
+        canvas.Mutate(x => x.DrawImage(image, new Point(posX, posY), 1f));
+
+        using MemoryStream saveStream = new();
+
+        await canvas.SaveAsJpegAsync(saveStream, new JpegEncoder() { Quality = options.JpegQuality }, cancellationToken);
+
+        ImageProcessingResult result = new(
+                                            EProcessingStatus.Completed, 
+                                            saveStream.ToArray(), 
+                                            new FileFormatInfo(EFileFormat.Jpeg), 
+                                            options.TargetResolution.Width, 
+                                            options.TargetResolution.Height, 
+                                            null, 
+                                            null, 
+                                            TimeSpan.Zero
+                                          );
+
+        return result;
     }
 
     private double GetMinValue(IEnumerable<double> input) => input.Min();

@@ -10,6 +10,16 @@ using WallpaperNormaliser.Core.Models.Manifest;
 namespace WallpaperNormaliser.Infrastructure.FileSystem;
 public sealed class JsonManifestRepository : IManifestRepository
 {
+    private readonly string _manifestDirectory;
+
+    public JsonManifestRepository(string manifestDirectory)
+    {
+        _manifestDirectory = manifestDirectory;
+        
+        if(!Directory.Exists(_manifestDirectory))
+            Directory.CreateDirectory(_manifestDirectory);
+    }
+
     public Task<ManifestDocument?> GetByIdAsync(Guid id, CancellationToken cancellationToken) => throw new NotImplementedException();
 
     public Task<ManifestDocument?> GetByNameAsync(string fileName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
