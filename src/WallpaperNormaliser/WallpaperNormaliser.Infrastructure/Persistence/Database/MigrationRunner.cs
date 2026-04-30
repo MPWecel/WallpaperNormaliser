@@ -4,8 +4,28 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Reflection;
+using Dapper;
+
 namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
 public sealed class MigrationRunner
 {
-    public Task RunAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    private readonly SqliteConnectionFactory _connectionFactory;
+
+    public MigrationRunner(SqliteConnectionFactory connectionFactory) 
+        => _connectionFactory = connectionFactory;
+
+    public async Task RunAsync(CancellationToken cancellationToken = default)
+    {
+        using var db = _connectionFactory.Create();
+
+        var sql = await File.ReadAllTextAsync(MigrationConstants.RelativeDbScriptPath_Pragmas, cancellationToken);
+
+        await db.ExecuteAsync(sql);
+    }
+}
+
+internal static class MigrationConstants
+{
+    internal static readonly string RelativeDbScriptPath_Pragmas = "Persistence/Sql/001_Initial.sql";
 }

@@ -8,6 +8,7 @@ using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Infrastructure.FileSystem;
 using WallpaperNormaliser.Infrastructure.Imaging;
 using WallpaperNormaliser.Infrastructure.Persistence.Repositories;
+using WallpaperNormaliser.Infrastructure.Processing;
 using WallpaperNormaliser.Infrastructure.Security;
 
 namespace WallpaperNormaliser.Infrastructure.DependencyInjection;
