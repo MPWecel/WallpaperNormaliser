@@ -8,7 +8,7 @@ using WallpaperNormaliser.Core.Enums;
 
 namespace WallpaperNormaliser.Core.Models.Processing;
 public sealed record ProcessingRun(
-                                      string RunId,
+                                      string Id,
                                       DateTime StartedUtc,
                                       DateTime? FinishedUtc,
                                       EProcessingStatus Status,
@@ -18,7 +18,7 @@ public sealed record ProcessingRun(
                                       int SkippedCount
                                   )
 {
-    public override string ToString() => new StringBuilder(8).AppendFormat("RunId: {0};", RunId)
+    public override string ToString() => new StringBuilder(8).AppendFormat("RunId: {0};", Id)
                                                              .AppendFormat("StartedUtc: {0};", StartedUtc.ToString("yyyy-MM-dd HH:mm:ss.ff"))
                                                              .AppendFormat("FinishedUtc: {0}", FinishedUtc?.ToString("yyyy-MM-dd HH:mm:ss.ff") ?? "null")
                                                              .AppendFormat("")

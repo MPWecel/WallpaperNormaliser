@@ -189,4 +189,17 @@ public sealed class SqliteSettingsRepository : ISettingsRepository
                               cancellationToken
                           );
 
+    public async Task ResetToDefaultsAsync(CancellationToken cancellationToken = default) 
+        => await SaveAsync(AppSettings.Default, cancellationToken);
+
+    public async Task<bool> ExistsAsync(CancellationToken cancellationToken = default)
+    {
+        using var db = _connectionFactory.Create();
+
+        string queryString = "SELECT COUNT(*) FROM [AppSettings]";
+        
+        long count = await db.ExecuteScalarAsync<long>(queryString, cancellationToken);
+        bool result = count > 0;
+        return result;
+    }
 }

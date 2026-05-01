@@ -9,9 +9,9 @@ using WallpaperNormaliser.Core.Models.Cache;
 namespace WallpaperNormaliser.Core.Contracts;
 public interface IPreprocessCacheRepository
 {
-    Task CleanupExpiredAsync(CancellationToken ct = default);
-    Task ClearAsync(CancellationToken cancellationToken = default);
     Task<PreprocessCacheEntry?> GetAsync(string sourceHash, CancellationToken cancellationToken = default);
-    Task RemoveByHashAsync(string sourceHash, CancellationToken cancellationToken = default);
     Task UpsertAsync(PreprocessCacheEntry entry, CancellationToken cancellationToken = default);
+    Task RemoveByHashAsync(string sourceHash, CancellationToken cancellationToken = default);
+    Task CleanupExpiredAsync(CancellationToken cancellationToken = default);
+    Task ClearAsync(CancellationToken cancellationToken = default);
 }

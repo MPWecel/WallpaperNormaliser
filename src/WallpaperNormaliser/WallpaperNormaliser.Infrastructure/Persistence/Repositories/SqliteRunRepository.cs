@@ -12,7 +12,8 @@ using WallpaperNormaliser.Core.Models.Processing;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
-public sealed class SqliteRunRepository
+
+public sealed class SqliteRunRepository : IRunRepository
 {
     private readonly SqliteConnectionFactory _connectionFactory;
 
@@ -49,7 +50,7 @@ public sealed class SqliteRunRepository
                                  FROM [ProcessingRuns]
                                  WHERE [RunId] = @RunId
                               """;
-        ProcessingRun? fromDb = await db.QuerySingleOrDefaultAsync<ProcessingRun>(selectScript, new { run.RunId });
+        ProcessingRun? fromDb = await db.QuerySingleOrDefaultAsync<ProcessingRun>(selectScript, new { run.Id });
         bool isRunInDb = (fromDb is not null);
 
         if (isRunInDb)
@@ -85,15 +86,15 @@ public sealed class SqliteRunRepository
         string updateScript = $"""
                                  UPDATE [ProcessingRunItems]
                                  SET {setInstruction}
-                                 WHERE [Id] = {run.RunId}
+                                 WHERE [Id] = {run.Id}
                               """;
 
         await db.ExecuteAsync(updateScript, run);
     }
 
-    public async Task FinaliseRunAsync(ProcessingRun run, CancellationToken cancellationToken = default) 
+    public async Task FinaliseRunAsync(ProcessingRun run, CancellationToken cancellationToken = default)
         => await UpsertRunAsync(run, cancellationToken);
-    
+
     public async Task<ProcessingRun?> GetRunAsync(string runId, CancellationToken cancellationToken = default)
     {
         using var db = _connectionFactory.Create();

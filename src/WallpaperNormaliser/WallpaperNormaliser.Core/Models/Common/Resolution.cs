@@ -4,14 +4,12 @@ public sealed record Resolution(int Width, int Height)
     public static Resolution? FromString(string input)
     {
         char separator = 'x';
+        StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
 
         if(!input.Contains(separator)) 
             return null;
 
-        string[] chunks = input.Split(
-                                        separator, 
-                                        StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-                                     );
+        string[] chunks = input.Split(separator, options);
         bool parseResult = Int32.TryParse(chunks[0], out int width) & 
                            Int32.TryParse(chunks[1], out int height);
 

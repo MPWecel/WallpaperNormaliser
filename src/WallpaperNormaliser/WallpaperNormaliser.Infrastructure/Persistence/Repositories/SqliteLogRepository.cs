@@ -97,4 +97,16 @@ public sealed class SqliteLogRepository : ILogRepository
         return entriesRemovedCount;
     }
 
+    public async Task<long> CountAsync(LogQuery query, CancellationToken cancellationToken = default)
+    {
+        using var db = _connectionFactory.Create();
+
+        string queryString = """
+                                SELECT COUNT(*)
+                                FROM [Logs]
+                                WHERE (@MinimumSeverity IS NULL OR [Severity]=@MinimumSeverity) AND (@CorrelationId IS NULL OR [CorrelationId]=@CorrelationId)
+                             """;
+        long result = await db.ExecuteScalarAsync<long>(queryString, query);
+        return result;
+    }
 }
