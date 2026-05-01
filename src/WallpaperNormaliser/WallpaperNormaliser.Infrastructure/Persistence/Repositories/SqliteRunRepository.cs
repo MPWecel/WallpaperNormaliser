@@ -56,8 +56,6 @@ public sealed class SqliteRunRepository
             await UpdateRunAsync(db, run, fromDb!, cancellationToken).ConfigureAwait(false);
         else
             await CreateRunAsync(run, cancellationToken).ConfigureAwait(false);
-
-        
     }
 
     private async Task UpdateRunAsync(IDbConnection db, ProcessingRun run, ProcessingRun fromDb, CancellationToken cancellationToken)
@@ -65,18 +63,29 @@ public sealed class SqliteRunRepository
         List<string> setBuilderList = new(8);
         //[ProcessingRuns] ([Id], [StartedUtc], [TargetWidth], [TargetHeight], [Quality])
         if (run.Status != fromDb.Status)
-            setBuilderList.Append($"[Status]={run.Status}, ");
+            setBuilderList.Add($"[Status]={run.Status}");
+
+        if (run.FinishedUtc != fromDb.FinishedUtc)
+            setBuilderList.Add($"[FinishedUtc]={run.FinishedUtc?.ToString("yyyy-MM-dd HH:mm:ss.ff") ?? "null"}");
 
         if (run.TotalFiles != fromDb.TotalFiles)
-            setBuilderList.Append($"[TotalFiles]={run.TotalFiles}, ");
+            setBuilderList.Add($"[TotalFiles]={run.TotalFiles}");
 
-        
+        if (run.SuccessCount != fromDb.SuccessCount)
+            setBuilderList.Add($"[SuccessCount]={run.SuccessCount}");
+
+        if (run.FailedCount != fromDb.FailedCount)
+            setBuilderList.Add($"[FailedCount]={run.FailedCount}");
+
+        if (run.SkippedCount != fromDb.SkippedCount)
+            setBuilderList.Add($"[SkippedCount]={run.SkippedCount}");
+
+        string setInstruction = String.Join(", ", setBuilderList);
 
         string updateScript = $"""
                                  UPDATE [ProcessingRunItems]
-                                 SET
-                                 WHERE [Id] = @RunId
-                                 VALUES (@Id, @RunId, @SourceHash, @FileName, @Status, @Message, @DurationMs)
+                                 SET {setInstruction}
+                                 WHERE [Id] = {run.RunId}
                               """;
 
         await db.ExecuteAsync(updateScript, run);
