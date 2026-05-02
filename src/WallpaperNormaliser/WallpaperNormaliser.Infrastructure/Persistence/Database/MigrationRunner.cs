@@ -19,7 +19,7 @@ public sealed class MigrationRunner
     {
         using var db = _connectionFactory.Create();
 
-        var sql = await File.ReadAllTextAsync(MigrationConstants.RelativeDbScriptPath_Pragmas, cancellationToken);
+        var sql = await File.ReadAllTextAsync(MigrationConstants._relativeDbScriptPath_Pragmas, cancellationToken);
 
         await db.ExecuteAsync(sql);
     }
@@ -27,5 +27,5 @@ public sealed class MigrationRunner
 
 internal static class MigrationConstants
 {
-    internal static readonly string RelativeDbScriptPath_Pragmas = "Persistence/Sql/001_Initial.sql";
+    internal static readonly string _relativeDbScriptPath_Pragmas = "Persistence/Sql/001_Initial.sql";
 }

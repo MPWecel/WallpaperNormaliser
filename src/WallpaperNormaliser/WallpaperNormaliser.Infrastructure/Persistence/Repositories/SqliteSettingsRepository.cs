@@ -62,8 +62,8 @@ public sealed class SqliteSettingsRepository : ISettingsRepository
 
         AppSettings result = new(
                                     !String.IsNullOrEmpty(rootDirectoryValue) ? rootDirectoryValue : @default.RootDirectory,
-                                    res ?? @default.DefaultResolution,
-                                    qualityParseResult ? quality : @default.DefaultJpegQuality,
+                                    res ?? @default.Resolution,
+                                    qualityParseResult ? quality : @default.Quality,
                                     scan ?? @default.ScanSettings,
                                     cache ?? @default.CacheSettings,
                                     logging ?? @default.LoggingSettings
@@ -168,8 +168,8 @@ public sealed class SqliteSettingsRepository : ISettingsRepository
         const string loggingSettingsKey = "AppSettings_Logging";
 
         result.Add(rootDirectoryKey, input.RootDirectory);
-        result.Add(resolutionKey, $"{input.DefaultResolution.Width}x{input.DefaultResolution.Height}");
-        result.Add(jpegQualityKey, $"{input.DefaultJpegQuality}");
+        result.Add(resolutionKey, $"{input.Resolution.Width}x{input.Resolution.Height}");
+        result.Add(jpegQualityKey, $"{input.Quality}");
         result.Add(scanSettingsKey, $"{input.ScanSettings.IsRecursive};{input.ScanSettings.IsWatchEnabled};{input.ScanSettings.DebounceMilliseconds}");
         result.Add(cacheSettingsKey, $"{input.CacheSettings.IsEnabled};{input.CacheSettings.MaxItems};{input.CacheSettings.ExpirationMinutes}");
         result.Add(loggingSettingsKey, $"{input.LoggingSettings.IsFileLoggingEnabled};{input.LoggingSettings.IsDatabaseLoggingEnabled};{input.LoggingSettings.RetentionDays};{input.LoggingSettings.MaxRows}");

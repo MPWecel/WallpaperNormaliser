@@ -23,7 +23,12 @@ public sealed class SqliteLogRepository : ILogRepository
     {
         using var db = _connectionFactory.Create();
 
-        string sql = "SELECT * FROM [Logs] ORDER BY [CreatedUtc] DESC LIMIT @Limit";
+        string sql = """
+                        SELECT [Id], [CreationDateUtc], [Severity], [Category], [Message], [CorrelationId], [SourceHash], [ExceptionMessage] 
+                        FROM [Logs] 
+                        ORDER BY [CreatedUtc] 
+                        DESC LIMIT @Limit
+                     """;
 
         var rows = await db.QueryAsync<LogEntry>(sql, new { query.Limit });
         return rows.ToList();

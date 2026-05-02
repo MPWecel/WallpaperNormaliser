@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WallpaperNormaliser.Core.Models.Indexing;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
@@ -13,26 +14,30 @@ public sealed class SqliteFileIndexRepository
 
     public SqliteFileIndexRepository(SqliteConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
 
-    public async Task<FileIndexEntry?> GetByHashAsync(
-        string hash,
-        CancellationToken ct = default)
+    public async Task<FileIndexEntry?> GetByHashAsync(string hash, CancellationToken cancellationToken = default)
     {
         using var db = _connectionFactory.Create();
 
-        return await db.QuerySingleOrDefaultAsync<FileIndexEntry>(
-            "SELECT * FROM [FileIndex] WHERE [Hash]=@hash",
-            new { hash });
+        string queryString = """
+                                SELECT [Id], [Hash], [RelativePath], [FullPath], [Resolution], [SizeBytes], [LastSeenUtc]
+                                FROM [FileIndex]
+                                WHERE [Hash] = @hash
+                             """;
+
+        return await db.QuerySingleOrDefaultAsync<FileIndexEntry>(queryString, new { hash });
     }
 
-    public async Task<FileIndexEntry?> GetByRelativePathAsync(
-        string relativePath,
-        CancellationToken ct = default)
+    public async Task<FileIndexEntry?> GetByRelativePathAsync(string relativePath, CancellationToken cancellationToken = default)
     {
         using var db = _connectionFactory.Create();
 
-        return await db.QuerySingleOrDefaultAsync<FileIndexEntry>(
-            "SELECT * FROM [FileIndex] WHERE [RelativePath]=@relativePath",
-            new { relativePath });
+        string queryString = """
+                                SELECT [Id], [Hash], [RelativePath], [FullPath], [Resolution], [SizeBytes], [LastSeenUtc]
+                                FROM [FileIndex]
+                                WHERE [RelativePath] = @relativePath
+                             """;
+
+        return await db.QuerySingleOrDefaultAsync<FileIndexEntry>(queryString, new { relativePath });
     }
 
     public async Task<IReadOnlyList<FileIndexEntry>> GetDuplicatesAsync(
