@@ -9,7 +9,7 @@ namespace WallpaperNormaliser.Core.Models.Cache;
 public sealed record PreprocessCacheEntry(
                                             string SourceHash, 
                                             Resolution Resolution, 
-                                            int JpegQuality, 
+                                            int Quality, 
                                             byte[] OutputBytes, 
                                             DateTime CreatedUtc, 
                                             DateTime ExpiresUtc

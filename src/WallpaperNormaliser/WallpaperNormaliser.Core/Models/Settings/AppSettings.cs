@@ -3,15 +3,15 @@
 namespace WallpaperNormaliser.Core.Models.Settings;
 public record AppSettings(
                              string RootDirectory,
-                             Resolution DefaultResolution,
-                             int DefaultJpegQuality,
+                             Resolution Resolution,
+                             int Quality,
                              ScanSettings ScanSettings,
                              CacheSettings CacheSettings,
                              LoggingSettings LoggingSettings
                          )
 {
     public static AppSettings Default => new(
-                                                "",
+                                                "APPLICATION_WORKING_DIRECTORY",
                                                 new(1920, 1080),
                                                 100,
                                                 new(true, true, 100),
