@@ -78,7 +78,7 @@ public sealed class SqliteSettingsRepository : ISettingsRepository
             return null;
         
         string[] inputChunks = input.Split('x', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        bool parseResult = Int32.TryParse(inputChunks[0], out int width) & Int32.TryParse(inputChunks[1], out int height);
+        bool parseResult = UInt32.TryParse(inputChunks[0], out uint width) & UInt32.TryParse(inputChunks[1], out uint height);
 
         if (!parseResult)
             return null;

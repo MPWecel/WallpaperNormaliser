@@ -45,8 +45,8 @@ public class ImageSharpProcessor : IImageProcessor
         image.Mutate(x => x.Resize(newWidth, newHeight));
 
         using Image<Rgba32> canvas = new(
-                                            options.TargetResolution.Width, 
-                                            options.TargetResolution.Height, 
+                                            (int)(options.TargetResolution.Width), 
+                                            (int)(options.TargetResolution.Height), 
                                             Color.Black
                                         );
 
@@ -63,8 +63,8 @@ public class ImageSharpProcessor : IImageProcessor
                                             EProcessingStatus.Completed, 
                                             saveStream.ToArray(), 
                                             new FileFormatInfo(EFileFormat.Jpeg), 
-                                            options.TargetResolution.Width, 
-                                            options.TargetResolution.Height, 
+                                            (int)(options.TargetResolution.Width), 
+                                            (int)(options.TargetResolution.Height), 
                                             null, 
                                             null, 
                                             TimeSpan.Zero

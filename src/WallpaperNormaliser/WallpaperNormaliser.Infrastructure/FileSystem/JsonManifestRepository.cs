@@ -22,7 +22,7 @@ public sealed class JsonManifestRepository : IManifestRepository
 
     public Task<ManifestDocument?> GetByIdAsync(Guid id, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-    public Task<ManifestDocument?> GetByNameAsync(string fileName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public Task<ManifestDocument?> GetByFileNameAsync(string fileName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 
     public Task<ManifestDocument?> GetByHashAsync(string hash, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 
