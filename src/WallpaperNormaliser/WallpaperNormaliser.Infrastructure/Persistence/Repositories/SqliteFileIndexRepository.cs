@@ -40,58 +40,55 @@ public sealed class SqliteFileIndexRepository
         return await db.QuerySingleOrDefaultAsync<FileIndexEntry>(queryString, new { relativePath });
     }
 
-    public async Task<IReadOnlyList<FileIndexEntry>> GetDuplicatesAsync(
-        string hash,
-        CancellationToken ct = default)
+    public async Task<IReadOnlyList<FileIndexEntry>> GetDuplicatesAsync(string hash, CancellationToken ct = default)
     {
         using var db = _connectionFactory.Create();
 
-        var rows = await db.QueryAsync<FileIndexEntry>(
-            "SELECT * FROM [FileIndex] WHERE [Hash]=@hash",
-            new { hash });
+        string query = """
+                          SELECT [Id], [Hash], [RelativePath], [FullPath], [Resolution], [SizeBytes], [LastSeenUtc]
+                          FROM [FileIndex]
+                          WHERE [Hash]=@hash
+                       """;
+
+        var rows = await db.QueryAsync<FileIndexEntry>(query, new { hash });
 
         return rows.ToList();
     }
 
-    public async Task<IReadOnlyList<FileIndexEntry>> ListAsync(
-        CancellationToken ct = default)
+    public async Task<IReadOnlyList<FileIndexEntry>> ListAsync(CancellationToken ct = default)
     {
         using var db = _connectionFactory.Create();
 
-        var rows = await db.QueryAsync<FileIndexEntry>(
-            "SELECT * FROM [FileIndex] ORDER BY [RelativePath]");
+        string query = """
+                          SELECT [Id], [Hash], [RelativePath], [FullPath], [Resolution], [SizeBytes], [LastSeenUtc]
+                          FROM [FileIndex]
+                          ORDER BY [RelativePath]
+                       """;
+
+        var rows = await db.QueryAsync<FileIndexEntry>(query);
 
         return rows.ToList();
     }
 
-    public async Task UpsertAsync(
-        FileIndexEntry entry,
-        CancellationToken ct = default)
+    public async Task UpsertAsync(FileIndexEntry entry, CancellationToken ct = default)
     {
         using var db = _connectionFactory.Create();
 
-        await db.ExecuteAsync(
-            """
-            INSERT INTO [FileIndex]
-            ([Id],[Hash],[RelativePath],[FullPath],[Width],[Height],
-             [Bytes],[LastSeenUtc])
-            VALUES
-            (@Id,@Hash,@RelativePath,@FullPath,@Width,@Height,
-             @Bytes,@LastSeenUtc)
-            ON CONFLICT([Hash]) DO UPDATE SET
-                [RelativePath]=excluded.[RelativePath],
-                [FullPath]=excluded.[FullPath],
-                [Width]=excluded.[Width],
-                [Height]=excluded.[Height],
-                [Bytes]=excluded.[Bytes],
-                [LastSeenUtc]=excluded.[LastSeenUtc]
-            """,
-            entry);
+        const string query = """
+                                INSERT INTO [FileIndex] ([Id], [Hash], [RelativePath], [FullPath], [Width], [Height], [Bytes], [LastSeenUtc])
+                                VALUES (@Id, @Hash, @RelativePath, @FullPath, @Width, @Height, @Bytes, @LastSeenUtc)
+                                ON CONFLICT([Hash]) DO UPDATE SET
+                                    [RelativePath]=excluded.[RelativePath],
+                                    [FullPath]=excluded.[FullPath],
+                                    [Width]=excluded.[Width],
+                                    [Height]=excluded.[Height],
+                                    [Bytes]=excluded.[Bytes],
+                                    [LastSeenUtc]=excluded.[LastSeenUtc]
+                             """;
+        await db.ExecuteAsync(query, entry);
     }
 
-    public async Task UpsertManyAsync(
-        IReadOnlyCollection<FileIndexEntry> entries,
-        CancellationToken ct = default)
+    public async Task UpsertManyAsync(IReadOnlyCollection<FileIndexEntry> entries, CancellationToken ct = default)
     {
         foreach (var e in entries)
             await UpsertAsync(e, ct);
