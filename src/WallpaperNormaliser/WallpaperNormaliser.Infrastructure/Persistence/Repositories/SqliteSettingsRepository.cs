@@ -1,5 +1,8 @@
-﻿using Dapper;
+﻿using System.Data;
 using System.Text.Json;
+
+using Dapper;
+
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Settings;
@@ -15,16 +18,16 @@ public sealed class SqliteSettingsRepository : ISettingsRepository
 
     public async Task<AppSettings> GetAsync(CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
+        using IDbConnection db = _connectionFactory.Create();
 
-        string query = "SELECT [Key], [Value] FROM [AppSettings]";
+        const string query = "SELECT [Key], [Value] FROM [AppSettings]";
 
-        var rows = await db.QueryAsync<(string Key, string Value)>(query);
+        IEnumerable<(string Key, string Value)> rows = await db.QueryAsync<(string Key, string Value)>(query);
 
         if (!(rows?.Any() ?? true))
             return AppSettings.Default;
 
-        var dict = rows!.ToDictionary(x=>x.Key, x=>x.Value);
+        Dictionary<string, string> dict = rows!.ToDictionary(x=>x.Key, x=>x.Value);
 
         AppSettings result = FromDictionary(dict);  //TEMPORARY!!!
 
@@ -69,80 +72,97 @@ public sealed class SqliteSettingsRepository : ISettingsRepository
 
     private Resolution? ParseResolution(string input)   //TEMPORARY!!!
     {
-        if(!input.Contains('x'))
-            return null;
+        const char separator = 'x';
+        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
+        Resolution? result = null;
+
+        if (!input.Contains(separator))
+            return result;
         
-        string[] inputChunks = input.Split('x', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        bool parseResult = UInt32.TryParse(inputChunks[0], out uint width) & UInt32.TryParse(inputChunks[1], out uint height);
+        string[] inputChunks = input.Split(separator, options);
+        bool parseResult = UInt32.TryParse(inputChunks[0], out uint width) & 
+                           UInt32.TryParse(inputChunks[1], out uint height);
 
-        if (!parseResult)
-            return null;
+        if (parseResult)
+            result = new Resolution(width, height);
 
-        return new Resolution(width, height);
+        return result;
     }
 
     private ScanSettings? ParseScanSettings(string input)   //TEMPORARY!!!
     {
-        if(!input.Contains(';'))
-            return null;
+        const char separator = ';';
+        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
+        ScanSettings? result = null;
 
-        string[] inputChunks = input.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (!input.Contains(separator))
+            return result;
+
+        string[] inputChunks = input.Split(separator, options);
 
         bool parseResult = Boolean.TryParse(inputChunks[0], out bool isRecursive) & 
                            Boolean.TryParse(inputChunks[1], out bool isWatchEnabled) & 
                            Int32.TryParse(inputChunks[2], out int debounce);
 
-        if(!parseResult)
-            return null;
+        if (parseResult)
+            result = new ScanSettings(isRecursive, isWatchEnabled, debounce);
 
-        return new ScanSettings(isRecursive, isWatchEnabled, debounce);
+        return result;
     }
 
     private CacheSettings? ParseCacheSettings(string input) //TEMPORARY!!!
     {
-        if (!input.Contains(';'))
-            return null;
+        const char separator = ';';
+        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
+        CacheSettings? result = null;
 
-        string[] inputChunks = input.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (!input.Contains(separator))
+            return result;
+
+        string[] inputChunks = input.Split(separator, options);
 
         bool parseResult = Boolean.TryParse(inputChunks[0], out bool isEnabled) &
-                       Int32.TryParse(inputChunks[1], out int maxitems) &
-                       Int32.TryParse(inputChunks[2], out int expirationminutes);
+                           Int32.TryParse(inputChunks[1], out int maxitems) &
+                           Int32.TryParse(inputChunks[2], out int expirationminutes);
 
-        if (!parseResult)
-            return null;
+        if (parseResult)
+            result = new CacheSettings(isEnabled, maxitems, expirationminutes);
 
-        return new CacheSettings(isEnabled, maxitems, expirationminutes);
+        return result;
     }
 
     private LoggingSettings? ParseLoggingSettings(string input) //TEMPORARY!!!
     {
-        if (!input.Contains(';'))
-            return null;
+        const char separator = ';';
+        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
+        LoggingSettings? result = null;
 
-        string[] inputChunks = input.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (!input.Contains(separator))
+            return result;
+
+        string[] inputChunks = input.Split(separator, options);
 
         bool parseResult = Boolean.TryParse(inputChunks[0], out bool isFileLoggingEnabled) &
                            Boolean.TryParse(inputChunks[1], out bool isDatabaseLoggingEnabled) &
                            Int32.TryParse(inputChunks[2], out int retentionDays) &
                            Int32.TryParse(inputChunks[3], out int maxRows);
 
-        if (!parseResult)
-            return null;
+        if (parseResult)
+            result = new LoggingSettings(isFileLoggingEnabled, isDatabaseLoggingEnabled, retentionDays, maxRows);
 
-        return new LoggingSettings(isFileLoggingEnabled, isDatabaseLoggingEnabled, retentionDays, maxRows);
+        return result;
     }
 
     public async Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
-        using var transaction = db.BeginTransaction();
+        using IDbConnection db = _connectionFactory.Create();
+        using IDbTransaction transaction = db.BeginTransaction();
 
-        string deleteScript = "DELETE FROM [AppSettings]";
+        const string deleteScript = "DELETE FROM [AppSettings]";
 
         await db.ExecuteAsync(deleteScript, transaction).ConfigureAwait(false);
 
-        string insertScript = "INSERT INTO [AppSettings] ([Key], [Value], [UpdatedUtc]) VALUES (@Key, @Value, @UpdatedUtc)";
+        const string insertScript = "INSERT INTO [AppSettings] ([Key], [Value], [UpdatedUtc]) VALUES (@Key, @Value, @UpdatedUtc)";
         DateTime now = DateTime.UtcNow;
         var records = ToDictionary(settings).Select(x=>new { Key = x.Key, Value = x.Value, UpdatedUtc = now }); //TEMPORARY!!!
 
@@ -189,17 +209,20 @@ public sealed class SqliteSettingsRepository : ISettingsRepository
 
     public async Task<bool> ExistsAsync(CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
+        using IDbConnection db = _connectionFactory.Create();
 
-        string queryString = "SELECT COUNT(*) FROM [AppSettings]";
+        const string queryString = "SELECT COUNT(*) FROM [AppSettings]";
         
         long count = await db.ExecuteScalarAsync<long>(queryString, cancellationToken);
         bool result = count > 0;
+        
         return result;
     }
 
-    public Task UpdateAsync(Func<AppSettings, AppSettings> updateDelegate, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(Func<AppSettings, AppSettings> updateDelegate, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var current = await GetAsync(cancellationToken);
+        var next = updateDelegate(current);
+        await SaveAsync(next, cancellationToken);
     }
 }
