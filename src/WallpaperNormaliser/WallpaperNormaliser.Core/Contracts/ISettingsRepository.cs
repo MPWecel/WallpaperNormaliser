@@ -9,4 +9,5 @@ public interface ISettingsRepository
     Task<string> ExportJsonAsync(CancellationToken cancellationToken = default);
     Task ImportJsonAsync(string json, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(CancellationToken cancellationToken = default);
+    Task UpdateAsync(Func<AppSettings, AppSettings> updateDelegate, CancellationToken cancellationToken = default);
 }

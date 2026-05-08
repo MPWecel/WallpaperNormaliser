@@ -7,5 +7,6 @@ public sealed record LogQuery(
                                 ELogSeverity? MinimumSeverity,
                                 string? CorrelationId,
                                 string? SourceHash,
-                                int Limit
+                                int Skip=0,
+                                int Limit=100
                              );

@@ -6,8 +6,7 @@ public sealed record ImageProcessingResult(
                                             EProcessingStatus Status, 
                                             byte[]? OutputBytes,
                                             FileFormatInfo OutputFormat,
-                                            int OutputWidth,
-                                            int OutputHeight,
+                                            Resolution OutputResolution,
                                             string? WarningMessage,
                                             string? ErrorMessage,
                                             TimeSpan Duration

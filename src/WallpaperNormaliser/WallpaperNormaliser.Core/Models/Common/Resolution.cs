@@ -1,5 +1,5 @@
 ﻿namespace WallpaperNormaliser.Core.Models.Common;
-public sealed record Resolution(int Width, int Height)
+public sealed record Resolution(uint Width, uint Height)
 {
     public static Resolution? FromString(string input)
     {
@@ -10,8 +10,8 @@ public sealed record Resolution(int Width, int Height)
             return null;
 
         string[] chunks = input.Split(separator, options);
-        bool parseResult = Int32.TryParse(chunks[0], out int width) & 
-                           Int32.TryParse(chunks[1], out int height);
+        bool parseResult = UInt32.TryParse(chunks[0], out uint width) & 
+                           UInt32.TryParse(chunks[1], out uint height);
 
         if(!parseResult)
             return null;
