@@ -1,10 +1,5 @@
 ﻿using Dapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Settings;
@@ -201,5 +196,10 @@ public sealed class SqliteSettingsRepository : ISettingsRepository
         long count = await db.ExecuteScalarAsync<long>(queryString, cancellationToken);
         bool result = count > 0;
         return result;
+    }
+
+    public Task UpdateAsync(Func<AppSettings, AppSettings> updateDelegate, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

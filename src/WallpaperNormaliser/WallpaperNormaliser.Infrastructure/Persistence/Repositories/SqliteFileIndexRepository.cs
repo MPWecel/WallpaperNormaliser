@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Indexing;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
-public sealed class SqliteFileIndexRepository
+public sealed class SqliteFileIndexRepository : IFileIndexRepository
 {
     private readonly SqliteConnectionFactory _connectionFactory;
 
