@@ -19,13 +19,13 @@ public sealed class SqliteConnectionFactory
 
     private static void EnablePragmas(SqliteConnection conn)
     {
-        string commandString = """
-                                  PRAGMA foreign_keys = ON;
-                                  PRAGMA journal_mode = WAL;
-                                  PRAGMA synchronous = NORMAL;
-                                  PRAGMA temp_store = MEMORY;
-                                  PRAGMA cache_size = -20000;
-                               """;
+        const string commandString = """
+                                        PRAGMA foreign_keys = ON;
+                                        PRAGMA journal_mode = WAL;
+                                        PRAGMA synchronous = NORMAL;
+                                        PRAGMA temp_store = MEMORY;
+                                        PRAGMA cache_size = -20000;
+                                     """;
         using SqliteCommand command = conn.CreateCommand();
         command.CommandText = commandString;
         command.CommandType = CommandType.Text;

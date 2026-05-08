@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Data;
 
-using System.Reflection;
 using Dapper;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
@@ -17,12 +12,16 @@ public sealed class MigrationRunner
 
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
+        using IDbConnection db = _connectionFactory.Create();
 
-        var sql = await File.ReadAllTextAsync(MigrationConstants._relativeDbScriptPath_Pragmas, cancellationToken);
+        string sql = await File.ReadAllTextAsync(MigrationConstants._relativeDbScriptPath_Pragmas, cancellationToken);
 
         await db.ExecuteAsync(sql);
     }
+
+    private async Task<string> LoadEmbeddedSqlAsync(string resourceName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    private async Task<string> ReadSqlFromFileAsync(string filePath, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    private async Task EnsureSchemaInfoAsync(IDbConnection connection, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }
 
 internal static class MigrationConstants
