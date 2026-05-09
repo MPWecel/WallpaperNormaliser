@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Security.Cryptography;
 
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Common;
@@ -15,10 +10,10 @@ public sealed class Sha256HashService : IHashService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        using var sha = SHA256.Create();
+        using SHA256 sha = SHA256.Create();
+        byte[] hash = sha.ComputeHash(file.Bytes);
+        string hashHexString = Convert.ToHexString(hash).ToLowerInvariant();
 
-        var hash = sha.ComputeHash(file.Bytes);
-
-        return Task.FromResult(Convert.ToHexString(hash).ToLowerInvariant());
+        return Task.FromResult(hashHexString);
     }
 }
