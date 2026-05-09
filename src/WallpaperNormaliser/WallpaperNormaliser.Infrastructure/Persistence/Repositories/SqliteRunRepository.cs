@@ -21,35 +21,34 @@ public sealed class SqliteRunRepository : IRunRepository
 
     public async Task CreateRunAsync(ProcessingRun run, CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
-        string insertScript = """
-                                 INSERT INTO [ProcessingRuns] ([RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount])
-                                 VALUES (@RunId, @StartedUtc, @FinishedUtc, @TotalFiles, @SuccessCount, @FailedCount, @SkippedCount)
-                              """;
+        using IDbConnection db = _connectionFactory.Create();
+        const string insertScript = """
+                                       INSERT INTO [ProcessingRuns] ([RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount])
+                                       VALUES (@RunId, @StartedUtc, @FinishedUtc, @TotalFiles, @SuccessCount, @FailedCount, @SkippedCount)
+                                    """;
 
         await db.ExecuteAsync(insertScript, run);
     }
 
     public async Task AddRunItemAsync(ProcessingRunItem item, CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
-        string insertScript = """
-                                 INSERT INTO [ProcessingRunItems] ([Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs], [CreatedUtc])
-                                 VALUES (@Id, @RunId, @SourceHash, @FileName, @Status, @Message, @DurationMs, @CreatedUtc)
-                              """;
+        using IDbConnection db = _connectionFactory.Create();
+        const string insertScript = """
+                                       INSERT INTO [ProcessingRunItems] ([Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs], [CreatedUtc])
+                                       VALUES (@Id, @RunId, @SourceHash, @FileName, @Status, @Message, @DurationMs, @CreatedUtc)
+                                    """;
 
         await db.ExecuteAsync(insertScript, item);
     }
 
     public async Task UpsertRunAsync(ProcessingRun run, CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
-
-        string selectScript = """
-                                 SELECT [RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount]
-                                 FROM [ProcessingRuns]
-                                 WHERE [RunId] = @RunId
-                              """;
+        using IDbConnection db = _connectionFactory.Create();
+        const string selectScript = """
+                                       SELECT [RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount]
+                                       FROM [ProcessingRuns]
+                                       WHERE [RunId] = @RunId
+                                    """;
         ProcessingRun? fromDb = await db.QuerySingleOrDefaultAsync<ProcessingRun>(selectScript, new { run.Id });
         bool isRunInDb = (fromDb is not null);
 
@@ -89,7 +88,7 @@ public sealed class SqliteRunRepository : IRunRepository
                                  WHERE [Id] = {run.Id}
                               """;
 
-        await db.ExecuteAsync(updateScript, run);
+        await db.ExecuteAsync(updateScript);
     }
 
     public async Task FinaliseRunAsync(ProcessingRun run, CancellationToken cancellationToken = default)
@@ -97,50 +96,42 @@ public sealed class SqliteRunRepository : IRunRepository
 
     public async Task<ProcessingRun?> GetRunAsync(string runId, CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
+        using IDbConnection db = _connectionFactory.Create();
 
-        string selectScript = """
-                         SELECT [Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs]
-                         FROM [ProcessingRunItems]
-                         WHERE [Id] = @runId
-                      """;
+        const string selectScript = """
+                                       SELECT [Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs]
+                                       FROM [ProcessingRunItems]
+                                       WHERE [Id] = @runId
+                                    """;
         ProcessingRun? fromDb = await db.QuerySingleOrDefaultAsync<ProcessingRun>(selectScript, new { runId });
-
         return fromDb;
     }
 
     public async Task<IReadOnlyList<ProcessingRun>> GetRecentRunsAsync(int take, CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
-
-        string queryString = """
-                                SELECT [RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount]
-                                FROM [ProcessingRuns]
-                                ORDER BY [StartedUtc] DESC
-                                LIMIT @take
-                             """;
-
+        using IDbConnection db = _connectionFactory.Create();
+        const string queryString = """
+                                   SELECT [RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount]
+                                   FROM [ProcessingRuns]
+                                   ORDER BY [StartedUtc] DESC
+                                   LIMIT @take
+                                """;
         IEnumerable<ProcessingRun>? rows = await db.QueryAsync<ProcessingRun>(queryString, new { take });
-
         List<ProcessingRun> result = rows?.ToList() ?? new();
-
         return result;
     }
 
     public async Task<IReadOnlyList<ProcessingRunItem>> GetRunItemsAsync(string runId, CancellationToken cancellationToken = default)
     {
-        using var db = _connectionFactory.Create();
-
-        string queryString = """
-                                SELECT [Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs], [CreatedUtc]
-                                FROM [ProcessingRunItems]
-                                WHERE [RunId]=@runId
-                                ORDER BY [Id]
-                             """;
-
+        using IDbConnection db = _connectionFactory.Create();
+        const string queryString = """
+                                      SELECT [Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs], [CreatedUtc]
+                                      FROM [ProcessingRunItems]
+                                      WHERE [RunId]=@runId
+                                      ORDER BY [Id]
+                                   """;
         IEnumerable<ProcessingRunItem>? rows = await db.QueryAsync<ProcessingRunItem>(queryString, new { runId });
         List<ProcessingRunItem> result = rows?.ToList() ?? new();
-
         return result;
     }
 }
