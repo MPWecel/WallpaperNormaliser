@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
-
+using WallpaperNormaliser.ConsoleUi.Navigation;
 using WallpaperNormaliser.Infrastructure;
 using WallpaperNormaliser.Infrastructure.DependencyInjection;
 
@@ -18,5 +18,11 @@ public static class ServiceRegistration
         services.AddConnectionFactory("");  //TODO - add connstring injection;
         services.AddMigrationRunner();
         services.AddInfrastructure();
+
+        services.AddSingleton<StartupRunner>();
+
+        services.AddSingleton<MainMenu>();
+
+
     }
 }
