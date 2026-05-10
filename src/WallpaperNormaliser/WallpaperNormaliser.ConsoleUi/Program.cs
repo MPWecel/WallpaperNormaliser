@@ -1,11 +1,20 @@
-﻿
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
+using WallpaperNormaliser.ConsoleUi.Bootstrap;
+using WallpaperNormaliser.ConsoleUi.Navigation;
 
 namespace WallpaperNormaliser.ConsoleUi;
 
-internal class Program
+public class Program
 {
-    internal static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        IServiceCollection services = new ServiceCollection();
+        ServiceRegistration.Configure(services);
+
+        using ServiceProvider provider = services.BuildServiceProvider();
+        
+        StartupRunner runner = provider.GetRequiredService<StartupRunner>();
+        await runner.RunAsync(provider);
     }
 }
