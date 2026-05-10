@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddConnectionFactory(this IServiceCollection services, string connectionString) 
         => services.AddSingleton<SqliteConnectionFactory>(new SqliteConnectionFactory(connectionString));
 
-    public static IServiceCollection AddMigrationRunnet(this IServiceCollection services) 
+    public static IServiceCollection AddMigrationRunner(this IServiceCollection services) 
         => services.AddSingleton<MigrationRunner>();
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)

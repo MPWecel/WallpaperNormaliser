@@ -1,0 +1,22 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using Microsoft.Extensions.DependencyInjection;
+
+using WallpaperNormaliser.Infrastructure;
+using WallpaperNormaliser.Infrastructure.DependencyInjection;
+
+namespace WallpaperNormaliser.ConsoleUi.Bootstrap;
+public static class ServiceRegistration
+{
+    public static void Configure(IServiceCollection services)
+    {
+        services.AddTypeHandlers();
+        services.AddConnectionFactory("");  //TODO - add connstring injection;
+        services.AddMigrationRunner();
+        services.AddInfrastructure();
+    }
+}

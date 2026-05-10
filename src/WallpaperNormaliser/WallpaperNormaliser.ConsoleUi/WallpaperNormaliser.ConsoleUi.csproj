@@ -18,6 +18,17 @@
 
     <ItemGroup>
       <Folder Include="App\" />
+      <Folder Include="Navigation\" />
+      <Folder Include="Models\" />
+      <Folder Include="Constants\" />
+      <Folder Include="Services\" />
+      <Folder Include="Rendering\" />
+      <Folder Include="Screens\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\WallpaperNormaliser.Core\WallpaperNormaliser.Core.csproj" />
+      <ProjectReference Include="..\WallpaperNormaliser.Infrastructure\WallpaperNormaliser.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
