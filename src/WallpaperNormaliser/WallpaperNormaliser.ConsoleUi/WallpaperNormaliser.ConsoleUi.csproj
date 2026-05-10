@@ -22,7 +22,6 @@
       <Folder Include="Constants\" />
       <Folder Include="Services\" />
       <Folder Include="Rendering\" />
-      <Folder Include="Screens\" />
     </ItemGroup>
 
     <ItemGroup>
