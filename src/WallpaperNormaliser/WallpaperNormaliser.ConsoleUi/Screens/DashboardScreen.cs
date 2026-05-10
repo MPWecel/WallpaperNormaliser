@@ -18,7 +18,7 @@ public sealed class DashboardScreen
         _paths = resolver;
     }
 
-    public async Task ShowAsync()
+    public Task ShowAsync()
     {
         AnsiConsole.Clear();
         var root = _paths.GetRoot();
