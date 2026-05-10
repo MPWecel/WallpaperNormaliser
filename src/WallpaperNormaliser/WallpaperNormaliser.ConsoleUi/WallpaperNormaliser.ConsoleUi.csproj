@@ -18,7 +18,6 @@
 
     <ItemGroup>
       <Folder Include="App\" />
-      <Folder Include="Navigation\" />
       <Folder Include="Models\" />
       <Folder Include="Constants\" />
       <Folder Include="Services\" />
