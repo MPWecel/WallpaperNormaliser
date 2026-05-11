@@ -21,12 +21,34 @@ public sealed class DashboardScreen
     public Task ShowAsync()
     {
         AnsiConsole.Clear();
-        var root = _paths.GetRoot();
+        AnsiConsole.MarkupLine(DashboardConstants.Title);
+
+        string root = _paths.GetRoot();
         Table table = new();
+        table.AddColumn(DashboardConstants.TableColumnHeader_Folders)
+             .AddColumn(DashboardConstants.TableColumnHeader_Exists);
+        table.AddRow(DashboardConstants.FolderInput, DirectoryExistsLabel(root, DashboardConstants.FolderInput))
+             .AddRow(DashboardConstants.FolderOutput, DirectoryExistsLabel(root, DashboardConstants.FolderOutput))
+             .AddRow(DashboardConstants.FolderManifest, DirectoryExistsLabel(root, DashboardConstants.FolderManifest));
 
         AnsiConsole.Write(table);
         Console.ReadKey(true);
 
         return Task.CompletedTask;
     }
+
+    private string DirectoryExistsLabel(string rootDirectory, string folderName) 
+        => Directory.Exists(Path.Combine(rootDirectory, folderName)) ? "Yes" : "No";
+}
+
+internal static class DashboardConstants
+{
+    internal const string Title = "[grey]Dashboard[/]";
+
+    internal const string TableColumnHeader_Folders = "FOLDER";
+    internal const string TableColumnHeader_Exists = "EXISTS";
+
+    internal const string FolderInput = "INPUT";
+    internal const string FolderOutput = "OUTPUT";
+    internal const string FolderManifest = "MANIFEST";
 }
