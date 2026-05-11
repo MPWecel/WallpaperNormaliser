@@ -9,48 +9,111 @@ using WallpaperNormaliser.Core.Enums;
 using WallpaperNormaliser.Core.Models.Logging;
 
 namespace WallpaperNormaliser.ConsoleUi.Screens;
-public sealed class LogsScreen(ILogRepository logRepository)
+public sealed class LogsScreen
 {
-    private readonly ILogRepository _logRepository = logRepository;
+    private readonly ILogRepository _logRepository;
+
+    private readonly IReadOnlyDictionary<string, Func<Task>> _menuActionMappings;
+
+    public LogsScreen(ILogRepository logRepository)
+    {
+        _logRepository = logRepository;
+
+        _menuActionMappings = new Dictionary<string, Func<Task>>
+        {
+            [LogsScreenConstants.RecentLogs] = ShowRecentLogsAsync,
+            [LogsScreenConstants.SearchLogs] = SearchLogsAsync
+        };
+    }
 
     public async Task ShowAsync()
     {
-        AnsiConsole.Clear();
-
-        string choice = AnsiConsole.Prompt(
-                                              new SelectionPrompt<string>().Title("LogView:")
-                                                                           .AddChoices(
-                                                                                          "[1] Recent logs.",
-                                                                                          "[2] Search logs.",
-                                                                                          "[3] Back."
-                                                                                      )
-                                          );
-
-        if (choice.Equals("Back", StringComparison.OrdinalIgnoreCase))
+        while(true)
         {
-            return;
+            AnsiConsole.Clear();
+            IReadOnlyList<LogEntry> logs = await _logRepository.QueryAsync(new(null, null, ELogSeverity.Trace, null, null));
+            RenderLogsTable(logs);
+
+            SelectionPrompt<string> prompt = new();
+            prompt.Title(LogsScreenConstants.Prompt)
+                  .AddChoices(LogsScreenConstants.Choices);
+
+            string choice = AnsiConsole.Prompt(prompt);
+
+            if (choice.Equals(LogsScreenConstants.Back, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            bool isChoiceActionDefined = _menuActionMappings.TryGetValue(choice, out Func<Task>? action);
+
+            if (!isChoiceActionDefined)
+                continue;
+
+            await action();
         }
+    }
 
-        Table table = new();
-        table.AddColumn("TIMESTAMP")
-             .AddColumn("LEVEL")
-             .AddColumn("MESSAGE");
-
-        LogQuery query = new(null, null, ELogSeverity.Trace, null, null);
-
+    private async Task ShowRecentLogsAsync()
+    {
+        LogQuery query = new(null, null, ELogSeverity.Trace, null, null, 0, 25);
         IReadOnlyList<LogEntry> logs = await _logRepository.QueryAsync(query);
 
-        foreach (var log in logs)
+        RenderLogsTable(logs);
+        AnsiConsole.Console.Input.ReadKey(false);
+    }
+
+    private async Task SearchLogsAsync()
+    {
+        LogQuery query = new(null, null, ELogSeverity.Trace, null, null, 0, 25);
+        IReadOnlyList<LogEntry> logs = await _logRepository.QueryAsync(query);
+
+        RenderLogsTable(logs);
+        AnsiConsole.Console.Input.ReadKey(false);
+    }
+
+    private static void RenderLogsTable(IEnumerable<LogEntry> logs)
+    {
+        Table table = new();
+
+        table.AddColumn(LogsScreenConstants.LogsTableColumnHeader_Timestamp)
+             .AddColumn(LogsScreenConstants.LogsTableColumnHeader_Category)
+             .AddColumn(LogsScreenConstants.LogsTableColumnHeader_Severity)
+             .AddColumn(LogsScreenConstants.LogsTableColumnHeader_Message)
+             .AddColumn(LogsScreenConstants.LogsTableColumnHeader_ExceptionMessage);
+
+        foreach (var log in logs.OrderByDescending(x=>x.CreationDateUtc))
         {
             table.AddRow(
-                            log.CreationDateUtc.ToString(),
+                            log.CreationDateUtc.ToString("yyyy-MM-dd HH:mm:ss"),
+                            log.Category,
                             log.Severity.ToString(),
-                            log.Message
+                            log.Message,
+                            log.ExceptionMessage ?? String.Empty
                         );
         }
 
         AnsiConsole.Write(table);
-
-        Console.ReadKey();
     }
+}
+
+internal static class LogsScreenConstants
+{
+    internal const string Prompt = "Logs";
+
+    internal const string LogsTableColumnHeader_Timestamp = "Timestamp";
+    internal const string LogsTableColumnHeader_Category = "Category";
+    internal const string LogsTableColumnHeader_Severity = "Severity";
+    internal const string LogsTableColumnHeader_Message = "Message";
+    internal const string LogsTableColumnHeader_ExceptionMessage = "ExceptionMessage";
+
+    internal const string Search = "Search";
+
+    internal const string RecentLogs = "[1] Recent logs";
+    internal const string SearchLogs = "[2] Search logs";
+    internal const string Back = "[0] Back";
+
+    internal static readonly string[] Choices = [
+                                                    RecentLogs,
+                                                    SearchLogs,
+                                                    Back
+                                                ];
 }
