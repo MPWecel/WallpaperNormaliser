@@ -4,10 +4,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WallpaperNormaliser.ConsoleUi.Screens;
 
 namespace WallpaperNormaliser.ConsoleUi.Navigation;
 public sealed class MainMenu
 {
+    private readonly DashboardScreen _dashboard;
+    private readonly ProcessingScreen _processing;
+    private readonly InventoryScreen _inventory;
+    private readonly SettingsScreen _settings;
+    private readonly LogsScreen _logs;
+
+    public MainMenu(DashboardScreen dashboard, ProcessingScreen processing, InventoryScreen inventory, SettingsScreen settings, LogsScreen logs)
+    {
+        _dashboard = dashboard;
+        _processing = processing;
+        _inventory = inventory;
+        _settings = settings;
+        _logs = logs;
+    }
+
     public async Task ShowAsync()
     {
         while(true)
@@ -20,14 +36,19 @@ public sealed class MainMenu
             switch(choice)
             {
                 case MainMenuConstants.MainMenuChoice_RunProcessing:
+                    await _processing.ShowAsync();
                     break;
                 case MainMenuConstants.MainMenuChoice_Dashboard:
+                    await _dashboard.ShowAsync();
                     break;
                 case MainMenuConstants.MainMenuChoice_Inventory:
+                    await _inventory.ShowAsync();
                     break;
                 case MainMenuConstants.MainMenuChoice_Settings:
+                    await _settings.ShowAsync();
                     break;
                 case MainMenuConstants.MainMenuChoice_Logs:
+                    await _logs.ShowAsync();
                     break;
                 case MainMenuConstants.MainMenuChoice_Exit:
                     break;
