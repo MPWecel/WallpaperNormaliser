@@ -7,12 +7,9 @@ using WallpaperNormaliser.Core.Models.Logging;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
-public sealed class SqliteLogRepository : ILogRepository
+public sealed class SqliteLogRepository(SqliteConnectionFactory connectionFactory) : ILogRepository
 {
-    private readonly SqliteConnectionFactory _connectionFactory;
-
-    public SqliteLogRepository(SqliteConnectionFactory connectionFactory) 
-        => _connectionFactory = connectionFactory;
+    private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task<IReadOnlyList<LogEntry>> QueryAsync(LogQuery query, CancellationToken cancellationToken = default)
     {
@@ -58,12 +55,12 @@ public sealed class SqliteLogRepository : ILogRepository
         using IDbTransaction tx = db.BeginTransaction();
 
         foreach(var item in entries)
-            await WriteInternalAsync(db, tx, item);
+            await WriteInternalAsync(db, tx, item, cancellationToken);
 
         tx.Commit();
     }
 
-    private Task WriteInternalAsync(IDbConnection db, IDbTransaction transaction, LogEntry entry, CancellationToken cancellationToken = default)
+    private static Task WriteInternalAsync(IDbConnection db, IDbTransaction transaction, LogEntry entry, CancellationToken cancellationToken = default)
     {
         string insertScript = """
                                  INSERT INTO [Logs] ([Id],[CreatedUtc],[Severity],[Category],[Message],[CorrelationId],[SourceHash],[Exception]) 

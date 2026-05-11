@@ -7,22 +7,13 @@ using System.Threading.Tasks;
 using WallpaperNormaliser.ConsoleUi.Screens;
 
 namespace WallpaperNormaliser.ConsoleUi.Navigation;
-public sealed class MainMenu
+public sealed class MainMenu(DashboardScreen dashboard, ProcessingScreen processing, InventoryScreen inventory, SettingsScreen settings, LogsScreen logs)
 {
-    private readonly DashboardScreen _dashboard;
-    private readonly ProcessingScreen _processing;
-    private readonly InventoryScreen _inventory;
-    private readonly SettingsScreen _settings;
-    private readonly LogsScreen _logs;
-
-    public MainMenu(DashboardScreen dashboard, ProcessingScreen processing, InventoryScreen inventory, SettingsScreen settings, LogsScreen logs)
-    {
-        _dashboard = dashboard;
-        _processing = processing;
-        _inventory = inventory;
-        _settings = settings;
-        _logs = logs;
-    }
+    private readonly DashboardScreen _dashboard = dashboard;
+    private readonly ProcessingScreen _processing = processing;
+    private readonly InventoryScreen _inventory = inventory;
+    private readonly SettingsScreen _settings = settings;
+    private readonly LogsScreen _logs = logs;
 
     public async Task ShowAsync()
     {

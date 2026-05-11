@@ -12,14 +12,9 @@ using WallpaperNormaliser.Core.Models.Settings;
 
 
 namespace WallpaperNormaliser.ConsoleUi.Screens;
-public sealed class SettingsScreen
+public sealed class SettingsScreen(ISettingsRepository settingsRepository)
 {
-    private readonly ISettingsRepository _settingsRepository;
-
-    public SettingsScreen(ISettingsRepository settingsRepository)
-    {
-        _settingsRepository = settingsRepository;
-    }
+    private readonly ISettingsRepository _settingsRepository = settingsRepository;
 
     public async Task ShowAsync()
     {

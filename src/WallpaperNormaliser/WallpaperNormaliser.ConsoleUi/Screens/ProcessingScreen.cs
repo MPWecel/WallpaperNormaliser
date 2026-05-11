@@ -14,16 +14,10 @@ using WallpaperNormaliser.Core.Models.Processing;
 using WallpaperNormaliser.Core.Models.Scan;
 
 namespace WallpaperNormaliser.ConsoleUi.Screens;
-public sealed class ProcessingScreen
+public sealed class ProcessingScreen(IProcessingOrchestrator orchestrator, SettingsValidator settingsValidator)
 {
-    private readonly IProcessingOrchestrator _orchestrator;
-    private readonly SettingsValidator _settingsValidator;
-
-    public ProcessingScreen(IProcessingOrchestrator orchestrator, SettingsValidator settingsValidator)
-    {
-        _orchestrator = orchestrator;
-        _settingsValidator = settingsValidator;
-    }
+    private readonly IProcessingOrchestrator _orchestrator = orchestrator;
+    private readonly SettingsValidator _settingsValidator = settingsValidator;
 
     public async Task ShowAsync()
     {
@@ -40,9 +34,7 @@ public sealed class ProcessingScreen
             var processingTask = AnsiConsole.Status()
                                             .Start(
                                                       ProcessingConstants.ProcessingWaitText,
-                                                      async x=>
-                                                      {
-                                                          await AnsiConsole.Progress()
+                                                      async x=> await AnsiConsole.Progress()
                                                                            .StartAsync(
                                                                                           async x =>
                                                                                           {
@@ -56,9 +48,7 @@ public sealed class ProcessingScreen
                                                                                               await _orchestrator.RunAsync(request);
                                                                                               task.Value = 100;
                                                                                           }
-                                                                                      );
-                                                      }
-                                                  );
+                                                                                      )                                                  );
             await processingTask!.ConfigureAwait(false);
 
             AnsiConsole.MarkupLine(ProcessingConstants.ProcessingSuccessfulInfo);

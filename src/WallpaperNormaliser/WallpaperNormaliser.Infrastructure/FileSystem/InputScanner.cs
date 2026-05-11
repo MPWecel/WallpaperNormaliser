@@ -28,7 +28,7 @@ public sealed class InputScanner : IInputScanner
 
     public Task<ScanResult> ScanAsync(ScanOptions options, CancellationToken cancellationToken = default)
     {
-        ScanResult result = null;
+        ScanResult? result;
         DateTime scanStartTimestampUtc = DateTime.UtcNow;
         DateTime scanStopTimestampUtc;
         TimeSpan scantime;

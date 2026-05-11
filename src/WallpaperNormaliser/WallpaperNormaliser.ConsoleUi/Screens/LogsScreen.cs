@@ -9,14 +9,9 @@ using WallpaperNormaliser.Core.Enums;
 using WallpaperNormaliser.Core.Models.Logging;
 
 namespace WallpaperNormaliser.ConsoleUi.Screens;
-public sealed class LogsScreen
+public sealed class LogsScreen(ILogRepository logRepository)
 {
-    private readonly ILogRepository _logRepository;
-
-    public LogsScreen(ILogRepository logRepository)
-    {
-        _logRepository = logRepository;
-    }
+    private readonly ILogRepository _logRepository = logRepository;
 
     public async Task ShowAsync()
     {

@@ -8,11 +8,9 @@ using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
 
-public sealed class SqliteRunRepository : IRunRepository
+public sealed class SqliteRunRepository(SqliteConnectionFactory connectionFactory) : IRunRepository
 {
-    private readonly SqliteConnectionFactory _connectionFactory;
-
-    public SqliteRunRepository(SqliteConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task<ProcessingRun?> GetRunAsync(string runId, CancellationToken cancellationToken = default)
     {
@@ -37,7 +35,7 @@ public sealed class SqliteRunRepository : IRunRepository
                                    LIMIT @take
                                 """;
         IEnumerable<ProcessingRun>? rows = await db.QueryAsync<ProcessingRun>(queryString, new { take });
-        List<ProcessingRun> result = rows?.ToList() ?? new();
+        List<ProcessingRun> result = rows?.ToList() ?? [];
         return result;
     }
 
@@ -51,7 +49,7 @@ public sealed class SqliteRunRepository : IRunRepository
                                       ORDER BY [Id]
                                    """;
         IEnumerable<ProcessingRunItem>? rows = await db.QueryAsync<ProcessingRunItem>(queryString, new { runId });
-        List<ProcessingRunItem> result = rows?.ToList() ?? new();
+        List<ProcessingRunItem> result = rows?.ToList() ?? [];
         return result;
     }
 
@@ -92,7 +90,7 @@ public sealed class SqliteRunRepository : IRunRepository
             await CreateRunAsync(run, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task UpdateRunAsync(IDbConnection db, ProcessingRun run, ProcessingRun fromDb, CancellationToken cancellationToken)
+    private static async Task UpdateRunAsync(IDbConnection db, ProcessingRun run, ProcessingRun fromDb, CancellationToken cancellationToken)
     {
         List<string> setBuilderList = new(8);
 

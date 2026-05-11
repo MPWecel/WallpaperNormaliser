@@ -7,7 +7,7 @@ public sealed class OutputWriter : IOutputWriter
 {
     public async Task<OutputWriteResult> WriteAsync(OutputWriteRequest request, CancellationToken cancellationToken = default)
     {
-        OutputWriteResult result;
+        OutputWriteResult? result;
         try
         {
             if(!Directory.Exists(request.TargetDirectory))

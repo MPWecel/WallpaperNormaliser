@@ -97,5 +97,5 @@ public sealed class JsonManifestRepository : IManifestRepository
 
     public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 
-    private string SanitizeFileName(string fileName) => fileName.Replace('.', '_');
+    private static string SanitizeFileName(string fileName) => fileName.Replace('.', '_');
 }

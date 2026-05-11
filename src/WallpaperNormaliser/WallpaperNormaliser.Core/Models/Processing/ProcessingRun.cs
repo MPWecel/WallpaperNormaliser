@@ -29,23 +29,22 @@ public sealed record ProcessingRun(
         char keyvalSeparator = ':';
         StringSplitOptions options = StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries;
         IEnumerable<string> inputChunks = input.Split(entrySeparator, options);
-        Func<string, KeyValuePair<string,string>> parseEntry = 
-                                                               (string entry) => 
-                                                                               { 
-                                                                                   string[] entryChunks = entry.Split(keyvalSeparator, options);
-                                                                                   return new KeyValuePair<string, string>(entryChunks[0], entryChunks[1]);
-                                                                               };
+        Func<string, KeyValuePair<string, string>> parseEntry = entry =>
+                                                                { 
+                                                                    string[] entryChunks = entry.Split(keyvalSeparator, options);
+                                                                    return new KeyValuePair<string, string>(entryChunks[0], entryChunks[1]);
+                                                                };
         Dictionary<string, string> entries = inputChunks.Select(parseEntry)
                                                         .ToDictionary(x=>x.Key, x => x.Value);
 
         const string runIdKey = "RunId";
-        bool parseResult = entries.TryGetValue(runIdKey, out string runIdValue);
+        bool parseResult = entries.TryGetValue(runIdKey, out string? runIdValue);
         const string startedUtcKey = "StartedUtc";
-        parseResult &= entries.TryGetValue(startedUtcKey, out string startedTimestampString);
+        parseResult &= entries.TryGetValue(startedUtcKey, out string? startedTimestampString);
         parseResult &= DateTime.TryParse(startedTimestampString, out DateTime startedUtcValue);
         
         const string finishedUtcKey = "FinishedUtc";
-        parseResult &= entries.TryGetValue(finishedUtcKey, out string finishedTimestampString);
+        parseResult &= entries.TryGetValue(finishedUtcKey, out string? finishedTimestampString);
         DateTime? finishedUtcNullableValue;
         
         if(String.IsNullOrEmpty(finishedUtcKey) || finishedUtcKey!.Equals("null"))
@@ -59,24 +58,24 @@ public sealed record ProcessingRun(
         }
         
         const string StatusKey = "Status";
-        parseResult &= entries.TryGetValue(StatusKey, out string statusValueString);
+        parseResult &= entries.TryGetValue(StatusKey, out string? statusValueString);
         parseResult &= Int32.TryParse(statusValueString, out int statusValueInt);
         EProcessingStatus statueValueEnum = (EProcessingStatus)(statusValueInt);
 
         const string TotalFilesKey = "TotalFiles";
-        parseResult &= entries.TryGetValue(TotalFilesKey, out string TotalFilesValueString);
+        parseResult &= entries.TryGetValue(TotalFilesKey, out string? TotalFilesValueString);
         parseResult &= Int32.TryParse(TotalFilesValueString, out int TotalFilesValueInt);
 
         const string successCountKey = "SuccessCount";
-        parseResult &= entries.TryGetValue(successCountKey, out string successCountValueString);
+        parseResult &= entries.TryGetValue(successCountKey, out string? successCountValueString);
         parseResult &= Int32.TryParse(successCountValueString, out int successCountValueInt);
 
         const string failedCountKey = "FailedCount";
-        parseResult &= entries.TryGetValue(failedCountKey, out string failedCountValueString);
+        parseResult &= entries.TryGetValue(failedCountKey, out string? failedCountValueString);
         parseResult &= Int32.TryParse(failedCountValueString, out int failedCountValueInt);
 
         const string skippedCountKey = "SkippedCount";
-        parseResult &= entries.TryGetValue(skippedCountKey, out string skippedCountValueString);
+        parseResult &= entries.TryGetValue(skippedCountKey, out string? skippedCountValueString);
         parseResult &= Int32.TryParse(skippedCountValueString, out int skippedCountValueInt);
 
         if (!parseResult)
@@ -84,7 +83,7 @@ public sealed record ProcessingRun(
 
 
         return new ProcessingRun(
-                                    runIdValue,
+                                    runIdValue!,
                                     startedUtcValue,
                                     finishedUtcNullableValue,
                                     statueValueEnum,

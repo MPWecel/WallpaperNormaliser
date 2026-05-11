@@ -9,12 +9,9 @@ using WallpaperNormaliser.Core.Models.Settings;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
-public sealed class SqliteSettingsRepository : ISettingsRepository
+public sealed class SqliteSettingsRepository(SqliteConnectionFactory connectionFactory) : ISettingsRepository
 {
-    private readonly SqliteConnectionFactory _connectionFactory;
-
-    public SqliteSettingsRepository(SqliteConnectionFactory connectionFactory) 
-        => _connectionFactory = connectionFactory;
+    private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task<AppSettings> GetAsync(CancellationToken cancellationToken = default)
     {

@@ -3,12 +3,9 @@
 using Dapper;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
-public sealed class MigrationRunner
+public sealed class MigrationRunner(SqliteConnectionFactory connectionFactory)
 {
-    private readonly SqliteConnectionFactory _connectionFactory;
-
-    public MigrationRunner(SqliteConnectionFactory connectionFactory) 
-        => _connectionFactory = connectionFactory;
+    private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {

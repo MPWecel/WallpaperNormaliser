@@ -66,9 +66,9 @@ public class ImageSharpProcessor : IImageProcessor
         return result;
     }
 
-    private double GetMinValue(IEnumerable<double> input) => input.Min();
+    private static double GetMinValue(IEnumerable<double> input) => input.Min();
 
-    private string? ValidateMinimumSize(int width, int height)
+    private static string? ValidateMinimumSize(int width, int height)
         => (width < 640 || height < 480) ?
                                          ($"Image resolution may be too low!\tInput resolution: {width}x{height}.\tRecommended minimum resolution: 640x480") :
                                          (null);

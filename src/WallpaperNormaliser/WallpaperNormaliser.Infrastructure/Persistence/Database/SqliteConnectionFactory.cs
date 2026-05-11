@@ -2,12 +2,9 @@
 using Microsoft.Data.Sqlite;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
-public sealed class SqliteConnectionFactory
+public sealed class SqliteConnectionFactory(string connectionString)
 {
-    private readonly string _connectionString;
-    public SqliteConnectionFactory(string connectionString) 
-        => _connectionString = connectionString 
-                                ?? throw new ArgumentNullException(nameof(connectionString));
+    private readonly string _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
 
     public IDbConnection Create()
     {

@@ -7,11 +7,9 @@ using WallpaperNormaliser.Core.Models.Indexing;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
-public sealed class SqliteFileIndexRepository : IFileIndexRepository
+public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connectionFactory) : IFileIndexRepository
 {
-    private readonly SqliteConnectionFactory _connectionFactory;
-
-    public SqliteFileIndexRepository(SqliteConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task<FileIndexEntry?> GetByHashAsync(string hash, CancellationToken cancellationToken = default)
     {

@@ -9,14 +9,9 @@ using Spectre.Console;
 using WallpaperNormaliser.ConsoleUi.Navigation;
 
 namespace WallpaperNormaliser.ConsoleUi.Bootstrap;
-public sealed class StartupRunner
+public sealed class StartupRunner(MainMenu menu)
 {
-    private readonly MainMenu _menu;
-
-    public StartupRunner(MainMenu menu)
-    {
-        _menu = menu;
-    }
+    private readonly MainMenu _menu = menu;
 
     public async Task RunAsync(IServiceProvider provider)
     {

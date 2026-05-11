@@ -11,16 +11,10 @@ using WallpaperNormaliser.ConsoleUi.Services;
 using WallpaperNormaliser.Core.Models.Scan;
 
 namespace WallpaperNormaliser.ConsoleUi.Screens;
-public sealed class InventoryScreen
+public sealed class InventoryScreen(IInputScanner scanner, WorkingDirectoryResolver paths)
 {
-    private readonly IInputScanner _scanner;
-    private readonly WorkingDirectoryResolver _paths;
-
-    public InventoryScreen(IInputScanner scanner, WorkingDirectoryResolver paths)
-    {
-        _scanner = scanner;
-        _paths = paths;
-    }
+    private readonly IInputScanner _scanner = scanner;
+    private readonly WorkingDirectoryResolver _paths = paths;
 
     public async Task ShowAsync()
     {

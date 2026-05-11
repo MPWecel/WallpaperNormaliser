@@ -9,14 +9,9 @@ using Spectre.Console;
 using WallpaperNormaliser.ConsoleUi.Services;
 
 namespace WallpaperNormaliser.ConsoleUi.Screens;
-public sealed class DashboardScreen
+public sealed class DashboardScreen(WorkingDirectoryResolver resolver)
 {
-    private readonly WorkingDirectoryResolver _paths;
-
-    public DashboardScreen(WorkingDirectoryResolver resolver)
-    {
-        _paths = resolver;
-    }
+    private readonly WorkingDirectoryResolver _paths = resolver;
 
     public Task ShowAsync()
     {
@@ -37,7 +32,7 @@ public sealed class DashboardScreen
         return Task.CompletedTask;
     }
 
-    private string DirectoryExistsLabel(string rootDirectory, string folderName) 
+    private static string DirectoryExistsLabel(string rootDirectory, string folderName) 
         => Directory.Exists(Path.Combine(rootDirectory, folderName)) ? "Yes" : "No";
 }
 

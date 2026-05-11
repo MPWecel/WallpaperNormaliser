@@ -8,11 +8,9 @@ using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
 
-public sealed class SqlitePreprocessCacheRepository : IPreprocessCacheRepository
+public sealed class SqlitePreprocessCacheRepository(SqliteConnectionFactory connectionFactory) : IPreprocessCacheRepository
 {
-    private readonly SqliteConnectionFactory _connectionFactory;
-
-    public SqlitePreprocessCacheRepository(SqliteConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task<PreprocessCacheEntry?> GetAsync(string sourceHash, CancellationToken cancellationToken = default)
     {
