@@ -27,12 +27,18 @@ public sealed class StartupRunner
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine("[red]FatalError:\t[/] {ex.Message}");
+            AnsiConsole.MarkupLine($"{StartupRunnerConstants.ExceptionMessage} {ex.Message}");
         }
     }
 
     private static void RenderHeader()
     {
-        AnsiConsole.Write(new Rule("[grey]WALLPAPER NORMALISER"));
+        AnsiConsole.Write(new Rule(StartupRunnerConstants.Title));
     }
+}
+
+internal static class StartupRunnerConstants
+{
+    internal const string Title = "[grey]WALLPAPER NORMALISER";
+    internal const string ExceptionMessage = "[red]FatalError:\t[/]";
 }

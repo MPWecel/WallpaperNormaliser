@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 using WallpaperNormaliser.ConsoleUi.Navigation;
+using WallpaperNormaliser.ConsoleUi.Screens;
+using WallpaperNormaliser.ConsoleUi.Services;
 using WallpaperNormaliser.Infrastructure;
 using WallpaperNormaliser.Infrastructure.DependencyInjection;
 
@@ -19,10 +21,17 @@ public static class ServiceRegistration
         services.AddMigrationRunner();
         services.AddInfrastructure();
 
+        services.AddSingleton<SettingsValidator>()
+                .AddSingleton<WorkingDirectoryResolver>();
+
         services.AddSingleton<StartupRunner>();
 
         services.AddSingleton<MainMenu>();
 
-
+        services.AddSingleton<DashboardScreen>()
+                .AddSingleton<ProcessingScreen>()
+                .AddSingleton<LogsScreen>()
+                .AddSingleton<InventoryScreen>()
+                .AddSingleton<SettingsScreen>();
     }
 }
