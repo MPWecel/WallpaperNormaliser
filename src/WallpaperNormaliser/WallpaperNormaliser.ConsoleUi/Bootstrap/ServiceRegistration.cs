@@ -5,7 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
+using WallpaperNormaliser.ConsoleUi.ApplicationServices;
+using WallpaperNormaliser.ConsoleUi.ApplicationServices.Interfaces;
 using WallpaperNormaliser.ConsoleUi.Navigation;
+using WallpaperNormaliser.ConsoleUi.Rendering;
 using WallpaperNormaliser.ConsoleUi.Screens;
 using WallpaperNormaliser.ConsoleUi.Services;
 using WallpaperNormaliser.Infrastructure;
@@ -22,16 +25,20 @@ public static class ServiceRegistration
         services.AddInfrastructure();
 
         services.AddSingleton<SettingsValidator>()
+                .AddSingleton<StartupValidator>()
+                .AddSingleton<ThemeMarkupProvider>()
                 .AddSingleton<WorkingDirectoryResolver>();
 
-        services.AddSingleton<StartupRunner>();
+        services.AddScoped<ISettingsApplicationService, SettingsApplicationService>();
 
-        services.AddSingleton<MainMenu>();
+        services.AddScoped<StartupRunner>();
 
-        services.AddSingleton<DashboardScreen>()
-                .AddSingleton<ProcessingScreen>()
-                .AddSingleton<LogsScreen>()
-                .AddSingleton<InventoryScreen>()
-                .AddSingleton<SettingsScreen>();
+        services.AddScoped<MainMenu>();
+
+        services.AddScoped<DashboardScreen>()
+                .AddScoped<ProcessingScreen>()
+                .AddScoped<LogsScreen>()
+                .AddScoped<InventoryScreen>()
+                .AddScoped<SettingsScreen>();
     }
 }

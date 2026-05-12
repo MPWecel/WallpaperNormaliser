@@ -13,8 +13,9 @@ public class Program
         ServiceRegistration.Configure(services);
 
         using ServiceProvider provider = services.BuildServiceProvider();
+        using IServiceScope scope = provider.CreateScope();
         
-        StartupRunner runner = provider.GetRequiredService<StartupRunner>();
+        StartupRunner runner = scope.ServiceProvider.GetRequiredService<StartupRunner>();
         await runner.RunAsync(provider);
     }
 }
