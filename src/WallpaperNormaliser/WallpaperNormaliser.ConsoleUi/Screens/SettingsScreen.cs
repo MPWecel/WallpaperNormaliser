@@ -1,5 +1,6 @@
 ﻿using Spectre.Console;
-
+using WallpaperNormaliser.ConsoleUi.ApplicationServices.Interfaces;
+using WallpaperNormaliser.ConsoleUi.Models.ViewModels;
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Settings;
@@ -8,13 +9,13 @@ using WallpaperNormaliser.Core.Models.Settings;
 namespace WallpaperNormaliser.ConsoleUi.Screens;
 public sealed class SettingsScreen
 {
-    private readonly ISettingsRepository _settingsRepository;
+    private readonly ISettingsApplicationService _settingsAppService;
 
     private readonly IReadOnlyDictionary<string, Func<Task>> _menuActionMappings;
 
-    public SettingsScreen(ISettingsRepository settingsRepository)
+    public SettingsScreen(ISettingsApplicationService settingsAppService)
     {
-        _settingsRepository = settingsRepository;
+        _settingsAppService = settingsAppService;
         _menuActionMappings = new Dictionary<string, Func<Task>>()
         {
             [SettingsScreenConstants.ChangeResolution] = ChangeResolutionAsync,
@@ -28,7 +29,7 @@ public sealed class SettingsScreen
         {
             AnsiConsole.Clear();
 
-            AppSettings settings = await _settingsRepository.GetAsync();
+            SettingsViewModel settings = await _settingsAppService.GetSettingsAsync();
 
             RenderSettingsTable(settings);
 
@@ -52,38 +53,38 @@ public sealed class SettingsScreen
 
     private async Task ChangeResolutionAsync()
     {
-        AppSettings settings = await _settingsRepository.GetAsync();
+        SettingsViewModel settings = await _settingsAppService.GetSettingsAsync();
 
-        uint width = AnsiConsole.Ask<uint>(SettingsScreenConstants.ChangeResolutionPromptWidth, settings.Resolution.Width);
-        uint height = AnsiConsole.Ask<uint>(SettingsScreenConstants.ChangeResolutionPromptHeight, settings.Resolution.Height);
-        AppSettings updated = settings with { Resolution = new Resolution(width, height) };
-        await _settingsRepository.SaveAsync(updated);
+        uint width = AnsiConsole.Ask<uint>(SettingsScreenConstants.ChangeResolutionPromptWidth, settings.Width);
+        uint height = AnsiConsole.Ask<uint>(SettingsScreenConstants.ChangeResolutionPromptHeight, settings.Height);
+        SettingsViewModel updated = settings.CreateUpdatedViewModel(width, height);
+        await _settingsAppService.SaveSettingsAsync(updated);
 
-        AnsiConsole.MarkupLine($"[green]{SettingsScreenConstants.ChangeResolutionSuccessMessage}{updated.Resolution.ToString()}[/]");
+        AnsiConsole.MarkupLine($"[green]{SettingsScreenConstants.ChangeResolutionSuccessMessage}{updated.ResolutionString}[/]");
         AnsiConsole.Console.Input.ReadKey(false);
     }
 
     private async Task ChangeJpegQualityAsync()
     {
-        AppSettings settings = await _settingsRepository.GetAsync();
+        SettingsViewModel settings = await _settingsAppService.GetSettingsAsync();
 
         int quality = AnsiConsole.Ask<int>(SettingsScreenConstants.ChangeQualityPrompt, settings.Quality);
-        AppSettings updated = settings with { Quality = quality };
-        await _settingsRepository.SaveAsync(updated);
+        SettingsViewModel updated = settings.CreateUpdatedViewModel(quality:  quality);
+        await _settingsAppService.SaveSettingsAsync(updated);
 
         AnsiConsole.MarkupLine($"[green]{SettingsScreenConstants.ChangeQualitySuccessMessage}{quality}[/]");
         AnsiConsole.Console.Input.ReadKey(false);
     }
 
-    private static void RenderSettingsTable(AppSettings settings)
+    private static void RenderSettingsTable(SettingsViewModel input)
     {
         Table table = new();
 
         table.AddColumn(SettingsScreenConstants.Setting)
              .AddColumn(SettingsScreenConstants.Value);
 
-        table.AddRow(SettingsScreenConstants.TableRowLabel_Resolution, settings.Resolution.ToString())
-             .AddRow(SettingsScreenConstants.TableRowLabel_Quality, settings.Quality.ToString());
+        table.AddRow(SettingsScreenConstants.TableRowLabel_Resolution, input.ResolutionString)
+             .AddRow(SettingsScreenConstants.TableRowLabel_Quality, input.Quality.ToString());
 
         AnsiConsole.Write(table);
     }
