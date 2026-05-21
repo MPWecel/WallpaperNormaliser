@@ -95,24 +95,21 @@ Example:
 ## 8. Persistence::
 	SQLite + Dapper
 	
-	### 8.1 Suggested tables::
-		#### Settings
-			>	Key
-			>	Value
-		#### ProcessingLog
-			>	Id
-			>	DateUtc
-			>	SourceHash
-			>	SourceName
-			>	Action
-			>	Status
-			>	Message
-			>	DurationMs
-		#### FileIndex (optional)
-			>	SourceHash
-			>	CurrentPath
-			>	LastSeenUtc
-			>	ManifestPath
+	### 8.1 Implemented tables::
+		#### SchemaInfo
+			Tracks schema migration version. Applied on startup by MigrationRunner.
+		#### AppSettings
+			Key/value store for all application configuration.
+		#### FileIndex
+			Discovered source files with hash, format, dimensions, size, and duplicate flag.
+		#### Logs
+			Structured operational logs with severity, category, and correlation ID.
+		#### PreprocessCache
+			Cached preprocessed JPEG bytes keyed by source hash + resolution.
+		#### ProcessingRuns
+			Batch processing run history (status, file counts, timestamps).
+		#### ProcessingRunItems
+			Per-file results within each processing run.
 		
 ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -176,6 +173,9 @@ Example:
 	
 	### ConsoleUi
 		Spectre.Console TUI frontend.
+		Internal layers: Bootstrap (DI, startup), Services (validation, path resolution),
+		Navigation (main menu), Screens (per-feature views), ApplicationServices (ViewModel mediators),
+		ViewModels (domain ↔ UI mapping), Rendering (theme, table builder).
 	
 ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -185,6 +185,10 @@ Example:
 	>	Microsoft.Extensions.DependencyInjection
 	>	Microsoft.Extensions.Configuration
 	>	Microsoft.Extensions.Logging
+	>	Microsoft.Data.Sqlite
+	>	SixLabors.ImageSharp
+	>	Spectre.Console
+	>	SQLKata			(planned — not yet integrated)
 	
 ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -219,6 +223,9 @@ Example:
 	>	ILogRepository
 	>	IInputScanner
 	>	IOutputWriter
+	>	IFileIndexRepository
+	>	IRunRepository
+	>	IPreprocessCacheRepository
 	
 ---------------------------------------------------------------------------------------------------------------------------------
 
