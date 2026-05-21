@@ -75,3 +75,7 @@ APPLICATION_WORKING_DIRECTORY/MANIFEST
 # github copilot and other junk
 .github/
 copilot-instructions.md
+
+# Claude files
+.claude/
+CLAUDE.md
