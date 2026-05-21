@@ -10,19 +10,24 @@ using Spectre.Console;
 using WallpaperNormaliser.ConsoleUi.Navigation;
 using WallpaperNormaliser.ConsoleUi.Rendering;
 using WallpaperNormaliser.ConsoleUi.Services;
+using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.ConsoleUi.Bootstrap;
-public sealed class StartupRunner(MainMenu menu, StartupValidator validator, ThemeMarkupProvider themeMarkupProvider)
+public sealed class StartupRunner(MainMenu menu, StartupValidator validator, ThemeMarkupProvider themeMarkupProvider, MigrationRunner migrations)
 {
     private readonly MainMenu _menu = menu;
     private readonly StartupValidator _validator = validator;
     private readonly ThemeMarkupProvider _themeMarkupProvider = themeMarkupProvider;
+    private readonly MigrationRunner _migrations = migrations;
 
     public async Task RunAsync(IServiceProvider provider)
     {
         try
         {
             RenderHeader();
+
+            await _migrations.RunAsync();
+
             StartupValidationResult validationResult = await _validator.ValidateAsync();
             if (!validationResult.IsValid)
             {

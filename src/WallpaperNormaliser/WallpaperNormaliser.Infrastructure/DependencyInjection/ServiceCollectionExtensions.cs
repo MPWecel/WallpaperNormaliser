@@ -14,10 +14,18 @@ using WallpaperNormaliser.Infrastructure.Persistence.Database;
 namespace WallpaperNormaliser.Infrastructure.DependencyInjection;
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddConnectionFactory(this IServiceCollection services, string connectionString) 
-        => services.AddSingleton<SqliteConnectionFactory>(new SqliteConnectionFactory(connectionString));
+    public static IServiceCollection AddDbPaths(this IServiceCollection services)
+        => services.AddSingleton<DbPaths>();
 
-    public static IServiceCollection AddMigrationRunner(this IServiceCollection services) 
+    public static IServiceCollection AddConnectionFactory(this IServiceCollection services)
+        => services.AddSingleton<SqliteConnectionFactory>(sp =>
+        {
+            DbPaths paths = sp.GetRequiredService<DbPaths>();
+            paths.EnsureDatabaseDirectoryExists();
+            return new SqliteConnectionFactory(paths.ConnectionString);
+        });
+
+    public static IServiceCollection AddMigrationRunner(this IServiceCollection services)
         => services.AddSingleton<MigrationRunner>();
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)

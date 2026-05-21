@@ -1,27 +1,62 @@
-﻿using System.Data;
+using System.Data;
 
 using Dapper;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
 public sealed class MigrationRunner(SqliteConnectionFactory connectionFactory)
 {
+    private const int _expectedSchemaVersion = 1;
+    private const string _schemaCreationFolder = "Persistence/Sql/SchemaCreation";
+
     private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         using IDbConnection db = _connectionFactory.Create();
 
-        string sql = await File.ReadAllTextAsync(MigrationConstants._relativeDbScriptPath_Pragmas, cancellationToken);
+        int? currentVersion = await GetCurrentSchemaVersionAsync(db);
+        if (currentVersion == _expectedSchemaVersion)
+            return;
 
-        await db.ExecuteAsync(sql);
+        IReadOnlyList<string> sqlFiles = GetOrderedSchemaCreationFiles();
+
+        using IDbTransaction tx = db.BeginTransaction();
+        try
+        {
+            foreach (string filePath in sqlFiles)
+            {
+                string sql = await ReadSqlFromFileAsync(filePath, cancellationToken);
+                await db.ExecuteAsync(sql, transaction: tx);
+            }
+            tx.Commit();
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
     }
 
-    private async Task<string> LoadEmbeddedSqlAsync(string resourceName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    private async Task<string> ReadSqlFromFileAsync(string filePath, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    private async Task EnsureSchemaInfoAsync(IDbConnection connection, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-}
+    private static async Task<int?> GetCurrentSchemaVersionAsync(IDbConnection db)
+    {
+        const string tableExistsSql = "SELECT name FROM sqlite_master WHERE type='table' AND name='SchemaInfo';";
+        string? tableName = await db.QueryFirstOrDefaultAsync<string?>(tableExistsSql);
+        if (string.IsNullOrEmpty(tableName))
+            return null;
 
-internal static class MigrationConstants
-{
-    internal static readonly string _relativeDbScriptPath_Pragmas = "Persistence/Sql/001_Initial.sql";
+        const string versionSql = "SELECT MAX([Version]) FROM [SchemaInfo];";
+        return await db.QueryFirstOrDefaultAsync<int?>(versionSql);
+    }
+
+    private static IReadOnlyList<string> GetOrderedSchemaCreationFiles()
+    {
+        string folder = Path.Combine(AppContext.BaseDirectory, _schemaCreationFolder);
+        return Directory
+            .GetFiles(folder, "*.sql", SearchOption.TopDirectoryOnly)
+            .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static Task<string> ReadSqlFromFileAsync(string filePath, CancellationToken cancellationToken)
+        => File.ReadAllTextAsync(filePath, cancellationToken);
 }

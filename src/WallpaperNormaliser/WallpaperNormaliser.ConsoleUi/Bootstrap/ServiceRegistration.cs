@@ -20,7 +20,8 @@ public static class ServiceRegistration
     public static void Configure(IServiceCollection services)
     {
         services.AddTypeHandlers();
-        services.AddConnectionFactory("");  //TODO - add connstring injection;
+        services.AddDbPaths();
+        services.AddConnectionFactory();
         services.AddMigrationRunner();
         services.AddInfrastructure();
 
