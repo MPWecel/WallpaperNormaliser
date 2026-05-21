@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Text.Json;
 
 using Dapper;
@@ -11,6 +11,13 @@ using WallpaperNormaliser.Infrastructure.Persistence.Database;
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
 public sealed class SqliteSettingsRepository(SqliteConnectionFactory connectionFactory) : ISettingsRepository
 {
+    private const string _keyRootDirectory = "AppSettings_RootDirectory";
+    private const string _keyResolution    = "AppSettings_Resolution";
+    private const string _keyQuality       = "AppSettings_Quality";
+    private const string _keyScan          = "AppSettings_Scan";
+    private const string _keyCache         = "AppSettings_Cache";
+    private const string _keyLogging       = "AppSettings_Logging";
+
     private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     public async Task<AppSettings> GetAsync(CancellationToken cancellationToken = default)
@@ -18,136 +25,20 @@ public sealed class SqliteSettingsRepository(SqliteConnectionFactory connectionF
         using IDbConnection db = _connectionFactory.Create();
 
         const string query = "SELECT [Key], [Value] FROM [AppSettings]";
-
         IEnumerable<(string Key, string Value)> rows = await db.QueryAsync<(string Key, string Value)>(query);
 
-        if (!(rows?.Any() ?? true))
-            return AppSettings.Default;
+        Dictionary<string, string> dict = rows.ToDictionary(x => x.Key, x => x.Value);
 
-        Dictionary<string, string> dict = rows!.ToDictionary(x=>x.Key, x=>x.Value);
+        AppSettings defaults = AppSettings.Default;
 
-        AppSettings result = FromDictionary(dict);  //TEMPORARY!!!
-
-        return result;
-    }
-
-    private AppSettings FromDictionary(Dictionary<string, string> input)    //TEMPORARY!!!
-    {
-        AppSettings @default = AppSettings.Default;
-
-        const string rootDirectoryKey = "AppSettings_RootDirectory";
-        const string resolutionKey = "AppSettings_Resolution";
-        const string jpegQualityKey = "AppSettings_jpegQuality";
-        const string scanSettingsKey = "AppSettings_Scan";
-        const string cacheSettingsKey = "AppSettings_Cache";
-        const string loggingSettingsKey = "AppSettings_Logging";
-
-        string? rootDirectoryValue = input[rootDirectoryKey];
-        string? resolutionValue = input[resolutionKey];
-        string? jpegQualityValue = input[jpegQualityKey];
-        string? scanSettingsValue = input[scanSettingsKey];
-        string? cacheSettingsValue = input[cacheSettingsKey];
-        string? loggingSettingsValue = input[loggingSettingsKey];
-
-        Resolution? res = ParseResolution(resolutionValue);
-        bool qualityParseResult = Int32.TryParse(jpegQualityValue, out int quality);
-        ScanSettings? scan = ParseScanSettings(scanSettingsValue);
-        CacheSettings? cache = ParseCacheSettings(cacheSettingsValue);
-        LoggingSettings? logging = ParseLoggingSettings(loggingSettingsValue);
-
-        AppSettings result = new(
-                                    !String.IsNullOrEmpty(rootDirectoryValue) ? rootDirectoryValue : @default.RootDirectory,
-                                    res ?? @default.Resolution,
-                                    qualityParseResult ? quality : @default.Quality,
-                                    scan ?? @default.ScanSettings,
-                                    cache ?? @default.CacheSettings,
-                                    logging ?? @default.LoggingSettings
-                                );
-
-        return result;
-    }
-
-    private Resolution? ParseResolution(string input)   //TEMPORARY!!!
-    {
-        const char separator = 'x';
-        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
-        Resolution? result = null;
-
-        if (!input.Contains(separator))
-            return result;
-        
-        string[] inputChunks = input.Split(separator, options);
-        bool parseResult = UInt32.TryParse(inputChunks[0], out uint width) & 
-                           UInt32.TryParse(inputChunks[1], out uint height);
-
-        if (parseResult)
-            result = new Resolution(width, height);
-
-        return result;
-    }
-
-    private ScanSettings? ParseScanSettings(string input)   //TEMPORARY!!!
-    {
-        const char separator = ';';
-        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
-        ScanSettings? result = null;
-
-        if (!input.Contains(separator))
-            return result;
-
-        string[] inputChunks = input.Split(separator, options);
-
-        bool parseResult = Boolean.TryParse(inputChunks[0], out bool isRecursive) & 
-                           Boolean.TryParse(inputChunks[1], out bool isWatchEnabled) & 
-                           Int32.TryParse(inputChunks[2], out int debounce);
-
-        if (parseResult)
-            result = new ScanSettings(isRecursive, isWatchEnabled, debounce);
-
-        return result;
-    }
-
-    private CacheSettings? ParseCacheSettings(string input) //TEMPORARY!!!
-    {
-        const char separator = ';';
-        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
-        CacheSettings? result = null;
-
-        if (!input.Contains(separator))
-            return result;
-
-        string[] inputChunks = input.Split(separator, options);
-
-        bool parseResult = Boolean.TryParse(inputChunks[0], out bool isEnabled) &
-                           Int32.TryParse(inputChunks[1], out int maxitems) &
-                           Int32.TryParse(inputChunks[2], out int expirationminutes);
-
-        if (parseResult)
-            result = new CacheSettings(isEnabled, maxitems, expirationminutes);
-
-        return result;
-    }
-
-    private LoggingSettings? ParseLoggingSettings(string input) //TEMPORARY!!!
-    {
-        const char separator = ';';
-        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
-        LoggingSettings? result = null;
-
-        if (!input.Contains(separator))
-            return result;
-
-        string[] inputChunks = input.Split(separator, options);
-
-        bool parseResult = Boolean.TryParse(inputChunks[0], out bool isFileLoggingEnabled) &
-                           Boolean.TryParse(inputChunks[1], out bool isDatabaseLoggingEnabled) &
-                           Int32.TryParse(inputChunks[2], out int retentionDays) &
-                           Int32.TryParse(inputChunks[3], out int maxRows);
-
-        if (parseResult)
-            result = new LoggingSettings(isFileLoggingEnabled, isDatabaseLoggingEnabled, retentionDays, maxRows);
-
-        return result;
+        return new AppSettings(
+            RootDirectory:   ReadOrDefault(dict, _keyRootDirectory, defaults.RootDirectory),
+            Resolution:      ReadOrDefault(dict, _keyResolution,    defaults.Resolution),
+            Quality:         ReadOrDefault(dict, _keyQuality,       defaults.Quality),
+            ScanSettings:    ReadOrDefault(dict, _keyScan,          defaults.ScanSettings),
+            CacheSettings:   ReadOrDefault(dict, _keyCache,         defaults.CacheSettings),
+            LoggingSettings: ReadOrDefault(dict, _keyLogging,       defaults.LoggingSettings)
+        );
     }
 
     public async Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default)
@@ -155,43 +46,33 @@ public sealed class SqliteSettingsRepository(SqliteConnectionFactory connectionF
         using IDbConnection db = _connectionFactory.Create();
         using IDbTransaction transaction = db.BeginTransaction();
 
-        const string deleteScript = "DELETE FROM [AppSettings]";
-
-        await db.ExecuteAsync(deleteScript, transaction).ConfigureAwait(false);
-
-        const string insertScript = "INSERT INTO [AppSettings] ([Key], [Value], [UpdatedUtc]) VALUES (@Key, @Value, @UpdatedUtc)";
         DateTime now = DateTime.UtcNow;
-        var records = ToDictionary(settings).Select(x=>new { Key = x.Key, Value = x.Value, UpdatedUtc = now }); //TEMPORARY!!!
 
-        await db.ExecuteAsync(insertScript, records, transaction).ConfigureAwait(false);
+        var rows = new[]
+        {
+            new { Key = _keyRootDirectory, Value = JsonSerializer.Serialize(settings.RootDirectory),   UpdatedUtc = now },
+            new { Key = _keyResolution,    Value = JsonSerializer.Serialize(settings.Resolution),      UpdatedUtc = now },
+            new { Key = _keyQuality,       Value = JsonSerializer.Serialize(settings.Quality),         UpdatedUtc = now },
+            new { Key = _keyScan,          Value = JsonSerializer.Serialize(settings.ScanSettings),    UpdatedUtc = now },
+            new { Key = _keyCache,         Value = JsonSerializer.Serialize(settings.CacheSettings),   UpdatedUtc = now },
+            new { Key = _keyLogging,       Value = JsonSerializer.Serialize(settings.LoggingSettings), UpdatedUtc = now },
+        };
 
+        const string upsert = """
+            INSERT INTO [AppSettings] ([Key], [Value], [UpdatedUtc])
+            VALUES (@Key, @Value, @UpdatedUtc)
+            ON CONFLICT([Key]) DO UPDATE SET
+                [Value] = excluded.[Value],
+                [UpdatedUtc] = excluded.[UpdatedUtc];
+            """;
+
+        await db.ExecuteAsync(upsert, rows, transaction);
         transaction.Commit();
     }
 
-    private Dictionary<string, string> ToDictionary(AppSettings input)  //TEMPORARY!!!
-    {
-        Dictionary<string,string> result = new();
-
-        const string rootDirectoryKey = "AppSettings_RootDirectory";
-        const string resolutionKey = "AppSettings_Resolution";
-        const string jpegQualityKey = "AppSettings_jpegQuality";
-        const string scanSettingsKey = "AppSettings_Scan";
-        const string cacheSettingsKey = "AppSettings_Cache";
-        const string loggingSettingsKey = "AppSettings_Logging";
-
-        result.Add(rootDirectoryKey, input.RootDirectory);
-        result.Add(resolutionKey, $"{input.Resolution.Width}x{input.Resolution.Height}");
-        result.Add(jpegQualityKey, $"{input.Quality}");
-        result.Add(scanSettingsKey, $"{input.ScanSettings.IsRecursive};{input.ScanSettings.IsWatchEnabled};{input.ScanSettings.DebounceMilliseconds}");
-        result.Add(cacheSettingsKey, $"{input.CacheSettings.IsEnabled};{input.CacheSettings.MaxItems};{input.CacheSettings.ExpirationMinutes}");
-        result.Add(loggingSettingsKey, $"{input.LoggingSettings.IsFileLoggingEnabled};{input.LoggingSettings.IsDatabaseLoggingEnabled};{input.LoggingSettings.RetentionDays};{input.LoggingSettings.MaxRows}");
-
-        return result;
-    }
-
-    public async Task<string> ExportJsonAsync(CancellationToken cancellationToken = default) 
+    public async Task<string> ExportJsonAsync(CancellationToken cancellationToken = default)
         => JsonSerializer.Serialize(
-                                       await GetAsync(cancellationToken), 
+                                       await GetAsync(cancellationToken),
                                        new JsonSerializerOptions { WriteIndented = true }
                                    );
 
@@ -201,7 +82,7 @@ public sealed class SqliteSettingsRepository(SqliteConnectionFactory connectionF
                               cancellationToken
                           );
 
-    public async Task ResetToDefaultsAsync(CancellationToken cancellationToken = default) 
+    public async Task ResetToDefaultsAsync(CancellationToken cancellationToken = default)
         => await SaveAsync(AppSettings.Default, cancellationToken);
 
     public async Task<bool> ExistsAsync(CancellationToken cancellationToken = default)
@@ -209,11 +90,8 @@ public sealed class SqliteSettingsRepository(SqliteConnectionFactory connectionF
         using IDbConnection db = _connectionFactory.Create();
 
         const string queryString = "SELECT COUNT(*) FROM [AppSettings]";
-        
         long count = await db.ExecuteScalarAsync<long>(queryString, cancellationToken);
-        bool result = count > 0;
-        
-        return result;
+        return count > 0;
     }
 
     public async Task UpdateAsync(Func<AppSettings, AppSettings> updateDelegate, CancellationToken cancellationToken = default)
@@ -221,5 +99,21 @@ public sealed class SqliteSettingsRepository(SqliteConnectionFactory connectionF
         var current = await GetAsync(cancellationToken);
         var next = updateDelegate(current);
         await SaveAsync(next, cancellationToken);
+    }
+
+    private static T ReadOrDefault<T>(Dictionary<string, string> dict, string key, T fallback)
+    {
+        if (!dict.TryGetValue(key, out string? value) || string.IsNullOrWhiteSpace(value))
+            return fallback;
+
+        try
+        {
+            T? parsed = JsonSerializer.Deserialize<T>(value);
+            return parsed ?? fallback;
+        }
+        catch (JsonException)
+        {
+            return fallback;
+        }
     }
 }
