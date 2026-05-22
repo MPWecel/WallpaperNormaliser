@@ -106,6 +106,7 @@ public sealed class JsonManifestRepository : IManifestRepository
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         string? file = await FindFilePathByIdAsync(id, cancellationToken).ConfigureAwait(false);
+        
         if (!string.IsNullOrEmpty(file) && File.Exists(file))
             File.Delete(file);
     }

@@ -41,6 +41,7 @@ public sealed class MigrationRunner(SqliteConnectionFactory connectionFactory)
     {
         const string tableExistsSql = "SELECT name FROM sqlite_master WHERE type='table' AND name='SchemaInfo';";
         string? tableName = await db.QueryFirstOrDefaultAsync<string?>(tableExistsSql);
+        
         if (string.IsNullOrEmpty(tableName))
             return null;
 
@@ -57,6 +58,5 @@ public sealed class MigrationRunner(SqliteConnectionFactory connectionFactory)
             .ToList();
     }
 
-    private static Task<string> ReadSqlFromFileAsync(string filePath, CancellationToken cancellationToken)
-        => File.ReadAllTextAsync(filePath, cancellationToken);
+    private static Task<string> ReadSqlFromFileAsync(string filePath, CancellationToken cancellationToken) => File.ReadAllTextAsync(filePath, cancellationToken);
 }

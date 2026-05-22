@@ -38,20 +38,24 @@ public static class ServiceCollectionExtensions
             ;
         services.AddScoped<IManifestRepository, JsonManifestRepository>()
             ;
-        services.AddScoped<IInputScanner, InputScanner>();
-        services.AddScoped<IOutputWriter, OutputWriter>();
+        services.AddScoped<IInputScanner, InputScanner>()
+                .AddScoped<IOutputWriter, OutputWriter>();
         
         services.AddScoped<ISettingsRepository, SqliteSettingsRepository>();
+        
         services.AddScoped<SqliteLogRepository>();
         services.AddScoped<FileLogSink>();
-        services.AddScoped<ILogRepository, CompositeLogger>();
-        services.AddScoped<IFileIndexRepository, SqliteFileIndexRepository>();
-        services.AddScoped<IRunRepository, SqliteRunRepository>();
-        services.AddScoped<IPreprocessCacheRepository, SqlitePreprocessCacheRepository>();
+        
+        services.AddScoped<ILogRepository, CompositeLogger>()
+                .AddScoped<IFileIndexRepository, SqliteFileIndexRepository>()
+                .AddScoped<IRunRepository, SqliteRunRepository>()
+                .AddScoped<IPreprocessCacheRepository, SqlitePreprocessCacheRepository>();
 
         services.AddScoped<IProcessingOrchestrator, ProcessingOrchestrator>();
+        
         services.AddScoped<PreprocessWorker>();
         services.AddScoped<WatcherService>();
+        
         return services;
     }
 

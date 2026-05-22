@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace WallpaperNormaliser.Infrastructure.FileSystem;
+﻿namespace WallpaperNormaliser.Infrastructure.FileSystem;
 public class WorkingDirectoryService
 {
     private string _rootDirectoryPath = "repo-root/db";

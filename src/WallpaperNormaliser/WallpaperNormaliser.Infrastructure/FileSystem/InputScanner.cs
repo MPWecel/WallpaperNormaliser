@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 
 using WallpaperNormaliser.Core.Contracts;
+using WallpaperNormaliser.Core.Enums;
 using WallpaperNormaliser.Core.Events;
 using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Scan;
@@ -9,13 +10,10 @@ using WallpaperNormaliser.Core.Models.Settings;
 namespace WallpaperNormaliser.Infrastructure.FileSystem;
 public sealed class InputScanner(ISettingsRepository settingsRepository) : IInputScanner, IDisposable
 {
-    private static readonly string[] SupportedExtensions =
-    [
-        ".jpg", ".jpeg", ".bmp", ".png", ".gif", ".tiff", ".tif", ".webp"
-    ];
+    private static readonly string[] _supportedExtensions = [ ".jpg", ".jpeg", ".bmp", ".png", ".gif", ".tiff", ".tif", ".webp" ];
 
-    private FileSystemWatcher?                              _watcher;
-    private CancellationTokenSource?                        _watchCts;
+    private FileSystemWatcher? _watcher;
+    private CancellationTokenSource? _watchCts;
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _debouncers = new(StringComparer.OrdinalIgnoreCase);
     private int _debounceMs = 300;
 
@@ -112,11 +110,9 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
 
     // --- FileSystemWatcher handlers ---
 
-    private void OnCreated(object sender, FileSystemEventArgs e)
-        => ScheduleDiscovery(e.FullPath, e.Name);
+    private void OnCreated(object sender, FileSystemEventArgs e) => ScheduleDiscovery(e.FullPath, e.Name);
 
-    private void OnChanged(object sender, FileSystemEventArgs e)
-        => ScheduleChange(e.FullPath, e.Name);
+    private void OnChanged(object sender, FileSystemEventArgs e) => ScheduleChange(e.FullPath, e.Name);
 
     private void OnDeleted(object sender, FileSystemEventArgs e)
     {
@@ -129,7 +125,8 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
 
     private void OnRenamed(object sender, RenamedEventArgs e)
     {
-        if (IsSupportedExtension(Path.GetExtension(e.OldName ?? e.OldFullPath)))
+        string extension = Path.GetExtension(e.OldName ?? e.OldFullPath);
+        if(IsSupportedExtension(extension))
         {
             CancelDebounce(e.OldFullPath);
             FileRemoved?.Invoke(this, new FileRemovedEventArgs(Path.GetFileName(e.OldFullPath), e.OldFullPath));
@@ -145,14 +142,18 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
         if (!IsSupportedExtension(Path.GetExtension(name ?? fullPath)))
             return;
 
-        Debounce(fullPath, () =>
-        {
-            FileInfo info = new(fullPath);
-            if (!info.Exists) return;
+        Debounce(
+                    fullPath, 
+                    () =>
+                    {
+                        FileInfo info = new(fullPath);
+                        if (!info.Exists) 
+                            return;
 
-            ScanItem item = BuildScanItem(fullPath, name, info);
-            FileDiscovered?.Invoke(this, new FileDiscoveredEventArgs(item));
-        });
+                        ScanItem item = BuildScanItem(fullPath, name, info);
+                        FileDiscovered?.Invoke(this, new FileDiscoveredEventArgs(item));
+                    }
+                );
     }
 
     private void ScheduleChange(string fullPath, string? name)
@@ -160,14 +161,18 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
         if (!IsSupportedExtension(Path.GetExtension(name ?? fullPath)))
             return;
 
-        Debounce(fullPath, () =>
-        {
-            FileInfo info = new(fullPath);
-            if (!info.Exists) return;
+        Debounce(
+                    fullPath, 
+                    () =>
+                    {
+                        FileInfo info = new(fullPath);
+                        if (!info.Exists) 
+                            return;
 
-            ScanItem item = BuildScanItem(fullPath, name, info);
-            FileChanged?.Invoke(this, new FileChangedEventArgs(item));
-        });
+                        ScanItem item = BuildScanItem(fullPath, name, info);
+                        FileChanged?.Invoke(this, new FileChangedEventArgs(item));
+                    }
+                );
     }
 
     private void Debounce(string fullPath, Action raise)
@@ -183,14 +188,18 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
 
         CancellationToken watchToken = _watchCts?.Token ?? CancellationToken.None;
 
-        _ = Task.Delay(_debounceMs, cts.Token).ContinueWith(t =>
-        {
-            if (!t.IsCanceled && !watchToken.IsCancellationRequested)
-            {
-                _debouncers.TryRemove(fullPath, out _);
-                raise();
-            }
-        }, TaskScheduler.Default);
+        _ = Task.Delay(_debounceMs, cts.Token)
+                .ContinueWith(
+                                t =>
+                                {
+                                    if (!t.IsCanceled && !watchToken.IsCancellationRequested)
+                                    {
+                                        _debouncers.TryRemove(fullPath, out _);
+                                        raise();
+                                    }
+                                }, 
+                                TaskScheduler.Default
+                             );
     }
 
     private void CancelDebounce(string fullPath)
@@ -208,16 +217,18 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
     {
         string fileName = Path.GetFileName(fullPath);
         string ext      = Path.GetExtension(fullPath);
-        return new ScanItem(
-            fileName,
-            name ?? fileName,
-            fullPath,
-            FileFormatInfo.FromExtension(ext)!,
-            info.Length,
-            info.LastWriteTimeUtc
-        );
+        FileFormatInfo format = FileFormatInfo.FromExtension(ext) ?? new FileFormatInfo(EFileFormat.Unknown);
+
+        ScanItem result = new(
+                                 fileName,
+                                 name ?? fileName,
+                                 fullPath,
+                                 format,
+                                 info.Length,
+                                 info.LastWriteTimeUtc
+                             );
+        return result;
     }
 
-    private static bool IsSupportedExtension(string ext)
-        => SupportedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase);
+    private static bool IsSupportedExtension(string ext) => _supportedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase);
 }

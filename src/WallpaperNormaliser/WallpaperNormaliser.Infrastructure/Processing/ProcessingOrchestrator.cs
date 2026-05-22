@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using WallpaperNormaliser.Core.Contracts;
-using WallpaperNormaliser.Core.Models;
+﻿using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Orchestration;
-using WallpaperNormaliser.Core.Models.Manifest;
 using WallpaperNormaliser.Core.Models.Scan;
 using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Processing;
@@ -15,32 +7,17 @@ using WallpaperNormaliser.Core.Models.Output;
 using WallpaperNormaliser.Core.Enums;
 
 namespace WallpaperNormaliser.Infrastructure.Processing;
-public sealed class ProcessingOrchestrator : IProcessingOrchestrator
+public sealed class ProcessingOrchestrator(IInputScanner scanner, IHashService hash, IImageProcessor processor, IOutputWriter writer, IManifestRepository manifest) : IProcessingOrchestrator
 {
-    private readonly IInputScanner _scanner;
-    private readonly IHashService _hashService;
-    private readonly IImageProcessor _imageProcessor;
-    private readonly IOutputWriter _outputWriter;
-    private readonly IManifestRepository _manifestRepository;
-
-    public ProcessingOrchestrator(
-                                    IInputScanner scanner, 
-                                    IHashService hash, 
-                                    IImageProcessor processor, 
-                                    IOutputWriter writer, 
-                                    IManifestRepository manifest
-                                 )
-    {
-        _scanner = scanner;
-        _hashService = hash;
-        _imageProcessor = processor;
-        _outputWriter = writer;
-        _manifestRepository = manifest;
-    }
+    private readonly IInputScanner _scanner = scanner;
+    private readonly IHashService _hashService = hash;
+    private readonly IImageProcessor _imageProcessor = processor;
+    private readonly IOutputWriter _outputWriter = writer;
+    private readonly IManifestRepository _manifestRepository = manifest;
 
     public async Task<BatchProcessResult> RunAsync(ProcessRequest request, CancellationToken cancellationToken = default)
     {
-        ScanResult scan = await _scanner.ScanAsync( request.ScanOptions, cancellationToken).ConfigureAwait(false);
+        ScanResult scan = await _scanner.ScanAsync(request.ScanOptions, cancellationToken).ConfigureAwait(false);
         List<FileProcessResult> results = new();
 
         foreach(var item in scan.Items)
