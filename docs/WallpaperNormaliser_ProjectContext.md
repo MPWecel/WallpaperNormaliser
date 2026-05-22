@@ -250,9 +250,9 @@
 		string          RootDirectory,
 		Resolution      Resolution,
 		int             Quality,
-		ScanSettings    Scan,
-		CacheSettings   Cache,
-		LoggingSettings Logging
+		ScanSettings    ScanSettings,
+		CacheSettings   CacheSettings,
+		LoggingSettings LoggingSettings
 	)
 	{
 		public static AppSettings Default { get; }
