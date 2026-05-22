@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WallpaperNormaliser.Core.Models.Indexing;
+﻿using WallpaperNormaliser.Core.Models.Indexing;
 
 namespace WallpaperNormaliser.Core.Contracts;
 public interface IFileIndexRepository

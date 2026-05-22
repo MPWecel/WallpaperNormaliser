@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using WallpaperNormaliser.Core.Models.Cache;
+﻿using WallpaperNormaliser.Core.Models.Cache;
 
 namespace WallpaperNormaliser.Core.Contracts;
 public interface IPreprocessCacheRepository
