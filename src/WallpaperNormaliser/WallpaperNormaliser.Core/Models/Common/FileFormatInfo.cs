@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Headers;
-using WallpaperNormaliser.Core.Enums;
+﻿using WallpaperNormaliser.Core.Enums;
 
 namespace WallpaperNormaliser.Core.Models.Common;
 public sealed record FileFormatInfo(EFileFormat Format)
