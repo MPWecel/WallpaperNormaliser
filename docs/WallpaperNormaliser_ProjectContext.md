@@ -262,27 +262,38 @@
 # I. Dependency Injection
 
 	```csharp
-	services.AddSingleton<IHashService,                Sha256HashService>();
-	services.AddSingleton<IImageProcessor,             ImageSharpProcessor>();
-	services.AddSingleton<ISettingsRepository,         SqliteSettingsRepository>();
-	services.AddSingleton<ILogRepository,              SqliteLogRepository>();
-	services.AddSingleton<IManifestRepository,         JsonManifestRepository>();
-	services.AddSingleton<IInputScanner,               RecursiveInputScanner>();
-	services.AddSingleton<IOutputWriter,               AtomicOutputWriter>();
-	services.AddSingleton<IProcessingOrchestrator,     ProcessingOrchestrator>();
-	services.AddSingleton<IFileIndexRepository,        SqliteFileIndexRepository>();
-	services.AddSingleton<IRunRepository,              SqliteRunRepository>();
-	services.AddSingleton<IPreprocessCacheRepository,  SqlitePreprocessCacheRepository>();
+	// Singletons — created once for the application lifetime
+	services.AddDbPaths();                  // DbPaths (path/connection-string resolver)
+	services.AddConnectionFactory();        // SqliteConnectionFactory (consumes DbPaths)
+	services.AddMigrationRunner();          // MigrationRunner
+	services.AddTypeHandlers();             // Registers Dapper TypeHandlers (Resolution)
+
+	// Scoped — created per DI scope (via AddInfrastructure)
+	services.AddScoped<IHashService,                Sha256HashService>();
+	services.AddScoped<IImageProcessor,             ImageSharpProcessor>();
+	services.AddScoped<IManifestRepository,         JsonManifestRepository>();
+	services.AddScoped<IInputScanner,               InputScanner>();
+	services.AddScoped<IOutputWriter,               OutputWriter>();
+	services.AddScoped<ISettingsRepository,         SqliteSettingsRepository>();
+	services.AddScoped<ILogRepository,              SqliteLogRepository>();
+	services.AddScoped<IFileIndexRepository,        SqliteFileIndexRepository>();
+	services.AddScoped<IRunRepository,              SqliteRunRepository>();
+	services.AddScoped<IPreprocessCacheRepository,  SqlitePreprocessCacheRepository>();
+	services.AddScoped<IProcessingOrchestrator,     ProcessingOrchestrator>();
 	```
 
 # J. Console Entry Point
 
 	```csharp
 	// Program.cs
-	var services = new ServiceCollection();
+	IServiceCollection services = new ServiceCollection();
 	ServiceRegistration.Configure(services);
-	using var provider = services.BuildServiceProvider();
-	await StartupRunner.RunAsync(provider);
+
+	using ServiceProvider provider = services.BuildServiceProvider();
+	using IServiceScope scope = provider.CreateScope();
+
+	StartupRunner runner = scope.ServiceProvider.GetRequiredService<StartupRunner>();
+	await runner.RunAsync(provider);
 	```
 
 	`StartupRunner` renders the application header, validates startup preconditions
@@ -305,20 +316,25 @@
 		>	JsonManifestRepository
 			Stores per-source manifest JSON files in the MANIFEST directory.
 
-		>	RecursiveInputScanner
+		>	InputScanner
 			Scans INPUT directory recursively or flat; detects supported image formats;
 			raises FileDiscovered / FileChanged / FileRemoved events in watch mode.
 
-		>	AtomicOutputWriter
+		>	OutputWriter
 			Writes output files safely using temp-then-move; enforces EOverwriteMode policies.
 
 	### Persistence
+		>	DbPaths
+			Single source of truth for the SQLite database directory and file path;
+			produces the connection string consumed by SqliteConnectionFactory;
+			ensures the db/ directory exists on first use.
+
 		>	SqliteConnectionFactory
 			Creates SQLite connections with PRAGMA settings (WAL, foreign keys, memory cache).
 
 		>	MigrationRunner
-			Loads and executes ordered SQL migration scripts; tracks version in SchemaInfo.
-			(LoadEmbeddedSqlAsync / EnsureSchemaInfoAsync not yet fully implemented.)
+			Loads and executes ordered SQL migration scripts from Persistence/Sql/SchemaCreation/;
+			tracks applied version in SchemaInfo; idempotent (returns early if schema is up-to-date).
 
 		>	ResolutionTypeHandler
 			Dapper TypeHandler<Resolution> — serialises Resolution to/from "WxH" string.
@@ -382,21 +398,20 @@
 
 	### In Progress
 		>	ConsoleUI functional completion (see next-steps.md)
-		>	MigrationRunner full implementation
-		>	Settings serialisation fix
+		>	Background subsystems (file logging, watch mode, preprocess worker)
 
 # N. Next Phase (Immediate)
 	Complete outstanding implementation tasks. Priority order:
 
-	1.	Fix connection string wiring in ServiceRegistration
-	2.	Complete MigrationRunner (LoadEmbeddedSqlAsync, EnsureSchemaInfoAsync)
-	3.	Fix SqliteSettingsRepository temporary string parsing
-	4.	Fix ProcessingScreen to read resolution from ISettingsRepository (not hardcoded)
-	5.	Implement DbPaths for SQLite file path resolution
-	6.	Implement SettingsValidator.Validate() with real logic
-	7.	Fix LogsScreen.SearchLogsAsync() to apply LogQuery filters
-	8.	Implement JsonManifestRepository.GetByIdAsync() and DeleteAsync()
-	9.	Complete DashboardScreen with file counts
+	1.	[DONE] Fix connection string wiring in ServiceRegistration
+	2.	[DONE] Complete MigrationRunner (LoadEmbeddedSqlAsync, EnsureSchemaInfoAsync)
+	3.	[DONE] Fix SqliteSettingsRepository temporary string parsing
+	4.	[DONE] Fix ProcessingScreen to read resolution from ISettingsRepository (not hardcoded)
+	5.	[DONE] Implement DbPaths for SQLite file path resolution
+	6.	[DONE] Implement SettingsValidator.Validate() with real logic
+	7.	[DONE] Fix LogsScreen.SearchLogsAsync() to apply LogQuery filters
+	8.	[DONE] Implement JsonManifestRepository.GetByIdAsync() and DeleteAsync()
+	9.	[DONE] Complete DashboardScreen with file counts
 	10.	Implement FileLogSink and CompositeLogger
 	11.	Implement WatcherService and InputScanner watch mode
 	12.	Implement PreprocessWorker
