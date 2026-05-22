@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 
 using WallpaperNormaliser.Core.Contracts;
@@ -12,7 +12,7 @@ public sealed class JsonManifestRepository : IManifestRepository
     public JsonManifestRepository(string manifestDirectory)
     {
         _manifestDirectory = manifestDirectory;
-        
+
         if(!Directory.Exists(_manifestDirectory))
             Directory.CreateDirectory(_manifestDirectory);
     }
@@ -31,7 +31,15 @@ public sealed class JsonManifestRepository : IManifestRepository
                                                               )
                                           ) { }
 
-    public Task<ManifestDocument?> GetByIdAsync(Guid id, CancellationToken cancellationToken) => throw new NotImplementedException();
+    public async Task<ManifestDocument?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        string? file = await FindFilePathByIdAsync(id, cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrEmpty(file))
+            return null;
+
+        string json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
+        return JsonSerializer.Deserialize<ManifestDocument>(json);
+    }
 
     public async Task<ManifestDocument?> GetByFileNameAsync(string fileName, CancellationToken cancellationToken = default)
     {
@@ -53,7 +61,7 @@ public sealed class JsonManifestRepository : IManifestRepository
         ManifestDocument? result = null;
         string? file = Directory.EnumerateFiles(_manifestDirectory, $"*_{hash}.json").FirstOrDefault();
 
-        if (!String.IsNullOrEmpty(file)) 
+        if (!String.IsNullOrEmpty(file))
         {
             string? json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
             result = JsonSerializer.Deserialize<ManifestDocument>(json);
@@ -77,7 +85,7 @@ public sealed class JsonManifestRepository : IManifestRepository
             {
                 string? json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
                 ManifestDocument? doc = JsonSerializer.Deserialize<ManifestDocument>(json);
-                
+
                 if(doc is not null)
                     result.Add(doc);
             }
@@ -95,7 +103,25 @@ public sealed class JsonManifestRepository : IManifestRepository
         await File.WriteAllTextAsync(path, json, Encoding.Default, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        string? file = await FindFilePathByIdAsync(id, cancellationToken).ConfigureAwait(false);
+        if (!string.IsNullOrEmpty(file) && File.Exists(file))
+            File.Delete(file);
+    }
+
+    private async Task<string?> FindFilePathByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        EnumerationOptions options = new() { MatchCasing = MatchCasing.CaseInsensitive, IgnoreInaccessible = true };
+        foreach (string file in Directory.EnumerateFiles(_manifestDirectory, "*.json", options))
+        {
+            string json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
+            ManifestDocument? doc = JsonSerializer.Deserialize<ManifestDocument>(json);
+            if (doc?.Id == id)
+                return file;
+        }
+        return null;
+    }
 
     private static string SanitizeFileName(string fileName) => fileName.Replace('.', '_');
 }
