@@ -5,6 +5,7 @@ using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Infrastructure.FileSystem;
 using WallpaperNormaliser.Infrastructure.Imaging;
+using WallpaperNormaliser.Infrastructure.Logging;
 using WallpaperNormaliser.Infrastructure.Persistence.Repositories;
 using WallpaperNormaliser.Infrastructure.Persistence.TypeHandlers;
 using WallpaperNormaliser.Infrastructure.Processing;
@@ -40,7 +41,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOutputWriter, OutputWriter>();
         
         services.AddScoped<ISettingsRepository, SqliteSettingsRepository>();
-        services.AddScoped<ILogRepository, SqliteLogRepository>();
+        services.AddScoped<SqliteLogRepository>();
+        services.AddScoped<FileLogSink>();
+        services.AddScoped<ILogRepository, CompositeLogger>();
         services.AddScoped<IFileIndexRepository, SqliteFileIndexRepository>();
         services.AddScoped<IRunRepository, SqliteRunRepository>();
         services.AddScoped<IPreprocessCacheRepository, SqlitePreprocessCacheRepository>();
