@@ -1,4 +1,4 @@
-﻿using Spectre.Console;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,9 +63,25 @@ public sealed class LogsScreen
 
     private async Task SearchLogsAsync()
     {
-        LogQuery query = new(null, null, ELogSeverity.Trace, null, null, 0, 25);
+        SelectionPrompt<ELogSeverity> severityPrompt = new SelectionPrompt<ELogSeverity>()
+            .Title(LogsScreenConstants.SearchSeverityPromptTitle)
+            .AddChoices(Enum.GetValues<ELogSeverity>());
+
+        ELogSeverity selectedSeverity = AnsiConsole.Prompt(severityPrompt);
+
+        LogQuery query = new(
+                                DateRangeFromUtc: null,
+                                DateRangeToUtc:   null,
+                                MinimumSeverity:  selectedSeverity,
+                                CorrelationId:    null,
+                                SourceHash:       null,
+                                Skip:             0,
+                                Limit:            25
+                            );
+
         IReadOnlyList<LogEntry> logs = await _logRepository.QueryAsync(query);
 
+        AnsiConsole.Clear();
         RenderLogsTable(logs);
         AnsiConsole.Console.Input.ReadKey(false);
     }
@@ -106,6 +122,7 @@ internal static class LogsScreenConstants
     internal const string LogsTableColumnHeader_ExceptionMessage = "ExceptionMessage";
 
     internal const string Search = "Search";
+    internal const string SearchSeverityPromptTitle = "Select minimum severity:";
 
     internal const string RecentLogs = "[1] Recent logs";
     internal const string SearchLogs = "[2] Search logs";
