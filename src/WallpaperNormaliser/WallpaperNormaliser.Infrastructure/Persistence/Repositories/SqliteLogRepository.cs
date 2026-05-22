@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 
 using Dapper;
 
@@ -16,25 +16,41 @@ public sealed class SqliteLogRepository(SqliteConnectionFactory connectionFactor
         using IDbConnection db = _connectionFactory.Create();
 
         const string sql = """
-                              SELECT [Id], [CreationDateUtc], [Severity], [Category], [Message], [CorrelationId], [SourceHash], [ExceptionMessage] 
-                              FROM [Logs] 
-                              WHERE 
+                              SELECT [Id],
+                                     [CreatedUtc]     AS [CreationDateUtc],
+                                     [Severity],
+                                     [Category],
+                                     [Message],
+                                     [CorrelationId],
+                                     [SourceHash],
+                                     [Exception]      AS [ExceptionMessage]
+                              FROM [Logs]
+                              WHERE
                               (
-                                (@DateRangeFromUtc IS NULL OR [CreationDateUtc] >= @DateRangeFromUtc) AND
-                                (@DateRangeToUtc IS NULL OR [CreationDateUtc] <= @DateRangeToUtc) AND
-                                (@MinimumSeverity IS NULL OR [Severity] >= @MinimumSeverity) AND
-                                (@CorrelationId IS NULL OR [CorrelationId] = @CorrelationId)
-                                (@SourceHash IS NULL OR [SourceHash] = @SourceHash)
+                                  (@DateRangeFromUtc IS NULL OR [CreatedUtc] >= @DateRangeFromUtc) AND
+                                  (@DateRangeToUtc   IS NULL OR [CreatedUtc] <= @DateRangeToUtc)   AND
+                                  (@MinimumSeverity  IS NULL OR [Severity]   >= @MinimumSeverity)  AND
+                                  (@CorrelationId    IS NULL OR [CorrelationId] = @CorrelationId)  AND
+                                  (@SourceHash       IS NULL OR [SourceHash]   = @SourceHash)
                               )
-                              ORDER BY [CreatedUtc] DESC 
+                              ORDER BY [CreatedUtc] DESC
                               LIMIT @Limit
                               OFFSET @Skip
                            """;
 
         IEnumerable<LogEntry> rows = await db.QueryAsync<LogEntry>(
-                                                                    sql, 
-                                                                    new { query.DateRangeFromUtc, query.DateRangeToUtc, query.MinimumSeverity, query.CorrelationId, query.SourceHash, query.Limit }
-                                                                  );
+            sql,
+            new
+            {
+                query.DateRangeFromUtc,
+                query.DateRangeToUtc,
+                query.MinimumSeverity,
+                query.CorrelationId,
+                query.SourceHash,
+                query.Limit,
+                query.Skip
+            });
+
         return rows.ToList();
     }
 
@@ -43,10 +59,11 @@ public sealed class SqliteLogRepository(SqliteConnectionFactory connectionFactor
         using IDbConnection db = _connectionFactory.Create();
 
         const string sql = """
-                              INSERT INTO [Logs] ([Id], [CreatedUtc], [Severity], [Category], [Message], [SourceHash], [CorrelationId], [Exception]) 
+                              INSERT INTO [Logs] ([Id], [CreatedUtc], [Severity], [Category], [Message], [SourceHash], [CorrelationId], [Exception])
                               VALUES (@Id, @CreatedUtc, @Severity, @Category, @Message, @SourceHash, @CorrelationId, @Exception)
                            """;
-        await db.ExecuteAsync(sql, entry);
+
+        await db.ExecuteAsync(sql, ToParameters(entry));
     }
 
     public async Task WriteManyAsync(IEnumerable<LogEntry> entries, CancellationToken cancellationToken = default)
@@ -54,80 +71,94 @@ public sealed class SqliteLogRepository(SqliteConnectionFactory connectionFactor
         using IDbConnection db = _connectionFactory.Create();
         using IDbTransaction tx = db.BeginTransaction();
 
-        foreach(var item in entries)
+        foreach (LogEntry item in entries)
             await WriteInternalAsync(db, tx, item, cancellationToken);
 
         tx.Commit();
     }
 
-    private static Task WriteInternalAsync(IDbConnection db, IDbTransaction transaction, LogEntry entry, CancellationToken cancellationToken = default)
-    {
-        string insertScript = """
-                                 INSERT INTO [Logs] ([Id],[CreatedUtc],[Severity],[Category],[Message],[CorrelationId],[SourceHash],[Exception]) 
-                                 VALUES (@Id, @CreatedUtc, @Severity, @Category, @Message, @CorrelationId, @SourceHash, @Exception)
-                              """;
-        return db.ExecuteAsync(insertScript, entry, transaction);
-    }
-
     public async Task<int> CleanupAsync(LogRetentionPolicy policy, CancellationToken cancellationToken = default)
     {
         using IDbConnection db = _connectionFactory.Create();
-        //using var tx = db.BeginTransaction();
 
         const string selectScript = "SELECT COUNT(*) FROM [Logs]";
-        int initialLogEntryCount = await db.ExecuteScalarAsync<int>(selectScript);
+        int initialCount = await db.ExecuteScalarAsync<int>(selectScript);
 
         const string timeBasedDelete = """
-                                          DELETE FROM [Logs] 
+                                          DELETE FROM [Logs]
                                           WHERE [CreatedUtc] < datetime('now', '-90 days')
                                        """;
         await db.ExecuteAsync(timeBasedDelete);
 
-        int logEntryCountAfterTimeBasedDelete = await db.ExecuteScalarAsync<int>(selectScript);
+        int countAfterTimePurge = await db.ExecuteScalarAsync<int>(selectScript);
 
-        if(logEntryCountAfterTimeBasedDelete > 10000)
+        if (countAfterTimePurge > 10000)
         {
             const string countBasedDelete = """
                                                DELETE FROM [Logs]
                                                WHERE [Id] NOT IN
                                                (
-                                                  SELECT [Id] 
-                                                  FROM [Logs] 
-                                                  ORDER BY [CreatedUtc] DESC 
-                                                  LIMIT 2500
+                                                   SELECT [Id]
+                                                   FROM [Logs]
+                                                   ORDER BY [CreatedUtc] DESC
+                                                   LIMIT 2500
                                                )
                                             """;
             await db.ExecuteAsync(countBasedDelete);
         }
 
-        int logEntryCountAfterCountBasedDelete = await db.ExecuteScalarAsync<int>(selectScript);
-
-        int entriesRemovedCount = initialLogEntryCount - Math.Min(logEntryCountAfterTimeBasedDelete, 
-                                                                  logEntryCountAfterCountBasedDelete);
-        //tx.Commit();
-
-        return entriesRemovedCount;
+        int finalCount = await db.ExecuteScalarAsync<int>(selectScript);
+        return initialCount - finalCount;
     }
 
     public async Task<long> CountAsync(LogQuery query, CancellationToken cancellationToken = default)
     {
         using IDbConnection db = _connectionFactory.Create();
-        const string queryString = """
-                                      SELECT COUNT(*)
-                                      FROM [Logs]
-                                      WHERE 
-                                      (
-                                          (@DateRangeFromUtc IS NULL OR [CreationDateUtc] >= @DateRangeFromUtc) AND
-                                          (@DateRangeToUtc IS NULL OR [CreationDateUtc] <= @DateRangeToUtc) AND
-                                          (@MinimumSeverity IS NULL OR [Severity] >= @MinimumSeverity) AND
-                                          (@CorrelationId IS NULL OR [CorrelationId] = @CorrelationId)
-                                          (@SourceHash IS NULL OR [SourceHash] = @SourceHash)      
-                                      )
-                                   """;
-        long result = await db.ExecuteScalarAsync<long>(
-                                                           queryString, 
-                                                           query
-                                                       );
-        return result;
+
+        const string sql = """
+                              SELECT COUNT(*)
+                              FROM [Logs]
+                              WHERE
+                              (
+                                  (@DateRangeFromUtc IS NULL OR [CreatedUtc] >= @DateRangeFromUtc) AND
+                                  (@DateRangeToUtc   IS NULL OR [CreatedUtc] <= @DateRangeToUtc)   AND
+                                  (@MinimumSeverity  IS NULL OR [Severity]   >= @MinimumSeverity)  AND
+                                  (@CorrelationId    IS NULL OR [CorrelationId] = @CorrelationId)  AND
+                                  (@SourceHash       IS NULL OR [SourceHash]   = @SourceHash)
+                              )
+                           """;
+
+        return await db.ExecuteScalarAsync<long>(
+            sql,
+            new
+            {
+                query.DateRangeFromUtc,
+                query.DateRangeToUtc,
+                query.MinimumSeverity,
+                query.CorrelationId,
+                query.SourceHash
+            });
     }
+
+    private static Task WriteInternalAsync(IDbConnection db, IDbTransaction transaction, LogEntry entry, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+                              INSERT INTO [Logs] ([Id], [CreatedUtc], [Severity], [Category], [Message], [CorrelationId], [SourceHash], [Exception])
+                              VALUES (@Id, @CreatedUtc, @Severity, @Category, @Message, @CorrelationId, @SourceHash, @Exception)
+                           """;
+
+        return db.ExecuteAsync(sql, ToParameters(entry), transaction);
+    }
+
+    private static object ToParameters(LogEntry entry) => new
+    {
+        entry.Id,
+        CreatedUtc     = entry.CreationDateUtc,
+        entry.Severity,
+        entry.Category,
+        entry.Message,
+        entry.SourceHash,
+        entry.CorrelationId,
+        Exception      = entry.ExceptionMessage
+    };
 }
