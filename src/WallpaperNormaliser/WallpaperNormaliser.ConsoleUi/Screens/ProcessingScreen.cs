@@ -30,15 +30,17 @@ public sealed class ProcessingScreen(
     {
         AnsiConsole.Clear();
 
-        bool validationResult = _settingsValidator.Validate();
+        AppSettings settings = await _settingsRepository.GetAsync();
+        SettingsValidationResult validation = _settingsValidator.Validate(settings);
 
-        if (!validationResult)
+        if (!validation.IsValid)
         {
             AnsiConsole.MarkupLine(ProcessingConstants.SettingsInvalidWarning);
+            foreach (string err in validation.Errors)
+                AnsiConsole.MarkupLine($"[yellow]  - {err}[/]");
         }
         else
         {
-            AppSettings settings = await _settingsRepository.GetAsync();
             string inputDirectory = _workingDirectoryResolver.GetInputDirectory();
 
             ProcessRequest request = new(
@@ -87,7 +89,7 @@ public sealed class ProcessingScreen(
 
 internal static class ProcessingConstants
 {
-    internal const string SettingsInvalidWarning      = "[yellow]Settings invalid. Wizard required in next iteration.[/]";
+    internal const string SettingsInvalidWarning      = "[yellow]Settings invalid:[/]";
     internal const string ProcessingWaitText          = "Processing...";
     internal const string ProcessingImagesTaskName    = "Processing images";
     internal const string ProcessingSuccessfulInfo    = "[green]Processing completed.[/]";
