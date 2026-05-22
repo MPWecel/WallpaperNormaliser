@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using WallpaperNormaliser.Core.Models.Scan;
 
 namespace WallpaperNormaliser.Core.Events;
-public class FileChangedEventArgs : EventArgs
+public sealed class FileChangedEventArgs(ScanItem item) : EventArgs
 {
+    public ScanItem Item { get; } = item;
 }

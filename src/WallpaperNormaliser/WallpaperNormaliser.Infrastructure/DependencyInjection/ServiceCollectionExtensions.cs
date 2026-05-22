@@ -3,6 +3,7 @@ using Dapper;
 
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Common;
+using WallpaperNormaliser.Infrastructure.Background;
 using WallpaperNormaliser.Infrastructure.FileSystem;
 using WallpaperNormaliser.Infrastructure.Imaging;
 using WallpaperNormaliser.Infrastructure.Logging;
@@ -49,6 +50,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPreprocessCacheRepository, SqlitePreprocessCacheRepository>();
 
         services.AddScoped<IProcessingOrchestrator, ProcessingOrchestrator>();
+        services.AddScoped<PreprocessWorker>();
+        services.AddScoped<WatcherService>();
         return services;
     }
 

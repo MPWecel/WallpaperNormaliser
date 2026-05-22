@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace WallpaperNormaliser.Core.Events;
-public class FileRemovedEventArgs : EventArgs
+public sealed class FileRemovedEventArgs(string fileName, string? fullPath) : EventArgs
 {
+    public string FileName  { get; } = fileName;
+    public string? FullPath { get; } = fullPath;
 }
