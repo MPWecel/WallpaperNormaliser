@@ -15,11 +15,11 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string queryString = """
-                                      SELECT [Id], [Hash], [RelativePath], [FullPath], [Resolution], [SizeBytes], [LastSeenUtc]
+                                      SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height] [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                       FROM [FileIndex]
-                                      WHERE [Hash] = @hash
+                                      WHERE [SourceHash] = @SourceHash
                                    """;
-        FileIndexEntry? result = await db.QuerySingleOrDefaultAsync<FileIndexEntry>(queryString, new { hash });
+        FileIndexEntry? result = await db.QuerySingleOrDefaultAsync<FileIndexEntry>(queryString, new { SourceHash = hash });
         return result;
     }
 
@@ -27,7 +27,7 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string queryString = """
-                                      SELECT [Id], [Hash], [RelativePath], [FullPath], [Resolution], [SizeBytes], [LastSeenUtc]
+                                      SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height] [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                       FROM [FileIndex]
                                       WHERE [RelativePath] = @relativePath
                                    """;
@@ -39,9 +39,9 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string query = """
-                                SELECT [Id], [Hash], [RelativePath], [FullPath], [Resolution], [SizeBytes], [LastSeenUtc]
+                                SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height] [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                 FROM [FileIndex]
-                                WHERE [Hash]=@hash
+                                WHERE [SourceHash]=@SourceHash
                              """;
         IEnumerable<FileIndexEntry> rows = await db.QueryAsync<FileIndexEntry>(query, new { hash });
         List<FileIndexEntry> result = rows.ToList();
@@ -52,7 +52,7 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string query = """
-                                SELECT [Id], [Hash], [RelativePath], [FullPath], [Resolution], [SizeBytes], [LastSeenUtc]
+                                SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height] [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                 FROM [FileIndex]
                                 ORDER BY [RelativePath]
                              """;
@@ -65,9 +65,9 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string query = """
-                                INSERT INTO [FileIndex] ([Id], [Hash], [RelativePath], [FullPath], [Width], [Height], [Bytes], [LastSeenUtc])
-                                VALUES (@Id, @Hash, @RelativePath, @FullPath, @Width, @Height, @Bytes, @LastSeenUtc)
-                                ON CONFLICT([Hash]) DO UPDATE SET [RelativePath]=excluded.[RelativePath],
+                                INSERT INTO [FileIndex] ([Id], [SourceHash], [RelativePath], [FullPath], [Width], [Height], [Bytes], [LastSeenUtc])
+                                VALUES (@Id, @SourceHash, @RelativePath, @FullPath, @Width, @Height, @Bytes, @LastSeenUtc)
+                                ON CONFLICT([SourceHash]) DO UPDATE SET [RelativePath]=excluded.[RelativePath],
                                                                   [FullPath]=excluded.[FullPath],
                                                                   [Width]=excluded.[Width],
                                                                   [Height]=excluded.[Height],
@@ -82,9 +82,9 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
         using IDbConnection db = _connectionFactory.Create();
         using IDbTransaction transaction = db.BeginTransaction();
         const string query = """
-                        INSERT INTO [FileIndex] ([Id], [Hash], [RelativePath], [FullPath], [Width], [Height], [Bytes], [LastSeenUtc])
-                        VALUES (@Id, @Hash, @RelativePath, @FullPath, @Width, @Height, @Bytes, @LastSeenUtc)
-                        ON CONFLICT([Hash]) DO UPDATE SET [RelativePath]=excluded.[RelativePath],
+                        INSERT INTO [FileIndex] ([Id], [SourceHash], [RelativePath], [FullPath], [Width], [Height], [Bytes], [LastSeenUtc])
+                        VALUES (@Id, @SourceHash, @RelativePath, @FullPath, @Width, @Height, @Bytes, @LastSeenUtc)
+                        ON CONFLICT([SourceHash]) DO UPDATE SET [RelativePath]=excluded.[RelativePath],
                                                           [FullPath]=excluded.[FullPath],
                                                           [Width]=excluded.[Width],
                                                           [Height]=excluded.[Height],
