@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS [AppSettings]
+(
+    [Key] TEXT PRIMARY KEY,
+    [Value] TEXT NOT NULL,
+    [UpdatedUtc] TEXT NOT NULL
+);

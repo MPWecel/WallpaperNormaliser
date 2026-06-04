@@ -1,10 +1,17 @@
-﻿using System.Data;
+using System.Data;
 using Microsoft.Data.Sqlite;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Database;
-public sealed class SqliteConnectionFactory(string connectionString)
+public sealed class SqliteConnectionFactory
 {
-    private readonly string _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+    private readonly string _connectionString;
+    private readonly string _pragmaSql;
+
+    public SqliteConnectionFactory(string connectionString, string pragmaSql)
+    {
+        _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+        _pragmaSql        = pragmaSql        ?? throw new ArgumentNullException(nameof(pragmaSql));
+    }
 
     public IDbConnection Create()
     {
@@ -14,17 +21,10 @@ public sealed class SqliteConnectionFactory(string connectionString)
         return connection;
     }
 
-    private static void EnablePragmas(SqliteConnection conn)
+    private void EnablePragmas(SqliteConnection conn)
     {
-        const string commandString = """
-                                        PRAGMA foreign_keys = ON;
-                                        PRAGMA journal_mode = WAL;
-                                        PRAGMA synchronous = NORMAL;
-                                        PRAGMA temp_store = MEMORY;
-                                        PRAGMA cache_size = -20000;
-                                     """;
         using SqliteCommand command = conn.CreateCommand();
-        command.CommandText = commandString;
+        command.CommandText = _pragmaSql;
         command.CommandType = CommandType.Text;
         command.ExecuteNonQuery();
     }
