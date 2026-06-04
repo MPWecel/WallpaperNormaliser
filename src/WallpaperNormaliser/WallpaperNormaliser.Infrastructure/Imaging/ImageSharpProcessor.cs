@@ -25,8 +25,8 @@ public class ImageSharpProcessor : IImageProcessor
 
         double[] scaleAvailableValues = [
                                             1.0,
-                                            ((double)(options.TargetResolution.Width / image.Width)),
-                                            ((double)(options.TargetResolution.Height / image.Height))
+                                            (((double)(options.TargetResolution.Width)) / ((double)(image.Width))),
+                                            (((double)(options.TargetResolution.Height)) / ((double)(image.Height)))
                                         ];
 
         double scale = GetMinValue(scaleAvailableValues);

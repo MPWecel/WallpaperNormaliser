@@ -24,7 +24,25 @@ public static class ServiceCollectionExtensions
         {
             DbPaths paths = sp.GetRequiredService<DbPaths>();
             paths.EnsureDatabaseDirectoryExists();
-            return new SqliteConnectionFactory(paths.ConnectionString);
+
+            string pragmaFilePath = Path.Combine(
+                AppContext.BaseDirectory,
+                "Persistence",
+                "Sql",
+                "SchemaCreation",
+                "000_Pragma.pragmasqlite");
+
+            if (!File.Exists(pragmaFilePath))
+                throw new FileNotFoundException(
+                    $"Required SQLite pragma file not found at '{pragmaFilePath}'.",
+                    pragmaFilePath);
+
+            string pragmaSql = File.ReadAllText(pragmaFilePath);
+            if (string.IsNullOrWhiteSpace(pragmaSql))
+                throw new InvalidOperationException(
+                    $"SQLite pragma file at '{pragmaFilePath}' is empty.");
+
+            return new SqliteConnectionFactory(paths.ConnectionString, pragmaSql);
         });
 
     public static IServiceCollection AddMigrationRunner(this IServiceCollection services)
