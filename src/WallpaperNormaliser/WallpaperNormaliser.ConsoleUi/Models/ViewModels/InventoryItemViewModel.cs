@@ -14,11 +14,13 @@ public sealed record InventoryItemViewModel(string FileName, string Extension)
 
     public ScanItem ToDomainEntity(ScanItem original)
     {
-        ScanItem result = original with
+        FileFormatInfo format = FileFormatInfo.FromExtension(this.Extension)
+            ?? throw new InvalidOperationException($"Unsupported file extension '{this.Extension}'.");
+
+        return original with
         {
             FileName = this.FileName,
-            Format = FileFormatInfo.FromExtension(this.Extension)
+            Format   = format
         };
-        return result;
     }
 }

@@ -48,7 +48,7 @@ public sealed class LogsScreen
             if (!isChoiceActionDefined)
                 continue;
 
-            await action();
+            await action!();
         }
     }
 
