@@ -1,5 +1,4 @@
 using Spectre.Console;
-using WallpaperNormaliser.ConsoleUi.Services;
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Enums;
 using WallpaperNormaliser.Core.Models.Common;
@@ -11,12 +10,12 @@ using WallpaperNormaliser.Core.Models.Settings;
 namespace WallpaperNormaliser.ConsoleUi.Screens;
 public sealed class ProcessingScreen(
     IProcessingOrchestrator orchestrator,
-    SettingsValidator settingsValidator,
+    ISettingsValidator settingsValidator,
     ISettingsRepository settingsRepository,
     IWorkingDirectoryResolver workingDirectoryResolver)
 {
     private readonly IProcessingOrchestrator _orchestrator = orchestrator;
-    private readonly SettingsValidator _settingsValidator = settingsValidator;
+    private readonly ISettingsValidator _settingsValidator = settingsValidator;
     private readonly ISettingsRepository _settingsRepository = settingsRepository;
     private readonly IWorkingDirectoryResolver _workingDirectoryResolver = workingDirectoryResolver;
 

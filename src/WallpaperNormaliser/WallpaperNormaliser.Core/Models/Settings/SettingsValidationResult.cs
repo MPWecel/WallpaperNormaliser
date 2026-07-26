@@ -1,2 +1,2 @@
-namespace WallpaperNormaliser.ConsoleUi.Services;
+namespace WallpaperNormaliser.Core.Models.Settings;
 public sealed record SettingsValidationResult(bool IsValid, IReadOnlyList<string> Errors);

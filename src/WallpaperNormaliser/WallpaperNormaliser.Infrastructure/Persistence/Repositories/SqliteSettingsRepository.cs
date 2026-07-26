@@ -4,6 +4,7 @@ using System.Text.Json;
 using Dapper;
 
 using WallpaperNormaliser.Core.Contracts;
+using WallpaperNormaliser.Core.Exceptions;
 using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Settings;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
@@ -11,7 +12,8 @@ using WallpaperNormaliser.Infrastructure.Persistence.Database;
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
 public sealed class SqliteSettingsRepository(
                                                 SqliteConnectionFactory connectionFactory,
-                                                ISettingsChangeNotifier changeNotifier
+                                                ISettingsChangeNotifier changeNotifier,
+                                                ISettingsValidator settingsValidator
                                             ) : ISettingsRepository
 {
     private const string _keyRootDirectory = "AppSettings_RootDirectory";
@@ -23,6 +25,7 @@ public sealed class SqliteSettingsRepository(
 
     private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
     private readonly ISettingsChangeNotifier _changeNotifier = changeNotifier;
+    private readonly ISettingsValidator _settingsValidator = settingsValidator;
 
     public async Task<AppSettings> GetAsync(CancellationToken cancellationToken = default)
     {
@@ -88,10 +91,16 @@ public sealed class SqliteSettingsRepository(
                                    );
 
     public async Task ImportJsonAsync(string json, CancellationToken cancellationToken = default)
-        => await SaveAsync(
-                              JsonSerializer.Deserialize<AppSettings>(json) ?? throw new InvalidOperationException("Invalid settings json"),
-                              cancellationToken
-                          );
+    {
+        AppSettings settings = JsonSerializer.Deserialize<AppSettings>(json)
+            ?? throw new InvalidOperationException("Invalid settings json");
+
+        SettingsValidationResult validation = _settingsValidator.Validate(settings);
+        if (!validation.IsValid)
+            throw new SettingsValidationException(validation.Errors);
+
+        await SaveAsync(settings, cancellationToken);
+    }
 
     public async Task ResetToDefaultsAsync(CancellationToken cancellationToken = default) => await SaveAsync(AppSettings.Default, cancellationToken);
 

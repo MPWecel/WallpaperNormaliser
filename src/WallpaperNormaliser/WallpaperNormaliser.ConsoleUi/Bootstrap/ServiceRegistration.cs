@@ -20,8 +20,7 @@ public static class ServiceRegistration
         services.AddSettingsChangeNotifier();
         services.AddInfrastructure();
 
-        services.AddSingleton<SettingsValidator>()
-                .AddSingleton<StartupValidator>()
+        services.AddSingleton<StartupValidator>()
                 .AddSingleton<ThemeMarkupProvider>();
 
         services.AddScoped<ISettingsApplicationService, SettingsApplicationService>();

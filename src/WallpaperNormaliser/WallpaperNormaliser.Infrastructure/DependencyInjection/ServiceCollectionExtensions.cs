@@ -3,6 +3,7 @@ using Dapper;
 
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Common;
+using WallpaperNormaliser.Core.Validation;
 using WallpaperNormaliser.Infrastructure.Background;
 using WallpaperNormaliser.Infrastructure.FileSystem;
 using WallpaperNormaliser.Infrastructure.Imaging;
@@ -54,6 +55,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<IWorkingDirectoryResolver, WorkingDirectoryResolver>();
+        services.AddSingleton<ISettingsValidator, SettingsValidator>();
 
         services.AddScoped<IHashService, Sha256HashService>();
 

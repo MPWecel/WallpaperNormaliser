@@ -1,7 +1,8 @@
+using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Settings;
 
-namespace WallpaperNormaliser.ConsoleUi.Services;
-public sealed class SettingsValidator
+namespace WallpaperNormaliser.Core.Validation;
+public sealed class SettingsValidator : ISettingsValidator
 {
     public SettingsValidationResult Validate(AppSettings settings)
     {
