@@ -10,8 +10,6 @@ using WallpaperNormaliser.Core.Models.Settings;
 namespace WallpaperNormaliser.Infrastructure.FileSystem;
 public sealed class InputScanner(ISettingsRepository settingsRepository) : IInputScanner, IDisposable
 {
-    private static readonly string[] _supportedExtensions = [ ".jpg", ".jpeg", ".bmp", ".png", ".gif", ".tiff", ".tif", ".webp" ];
-
     private FileSystemWatcher? _watcher;
     private CancellationTokenSource? _watchCts;
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _debouncers = new(StringComparer.OrdinalIgnoreCase);
@@ -236,5 +234,6 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
         return result;
     }
 
-    private static bool IsSupportedExtension(string ext) => _supportedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase);
+    private static bool IsSupportedExtension(string ext)
+        => !String.IsNullOrEmpty(ext) && FileFormatInfo.SupportedExtensions.Contains(ext.TrimStart('.'));
 }
