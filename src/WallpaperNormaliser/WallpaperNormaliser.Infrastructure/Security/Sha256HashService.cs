@@ -10,8 +10,7 @@ public sealed class Sha256HashService : IHashService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        using SHA256 sha = SHA256.Create();
-        byte[] hash = sha.ComputeHash(file.Bytes);
+        byte[] hash = SHA256.HashData(file.Bytes);
         string hashHexString = Convert.ToHexString(hash).ToLowerInvariant();
 
         return Task.FromResult(hashHexString);
