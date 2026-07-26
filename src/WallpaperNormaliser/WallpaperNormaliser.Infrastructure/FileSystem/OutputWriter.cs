@@ -1,4 +1,4 @@
-﻿using WallpaperNormaliser.Core.Contracts;
+using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Enums;
 using WallpaperNormaliser.Core.Models.Output;
 
@@ -7,7 +7,7 @@ public sealed class OutputWriter : IOutputWriter
 {
     public async Task<OutputWriteResult> WriteAsync(OutputWriteRequest request, CancellationToken cancellationToken = default)
     {
-        OutputWriteResult? result;
+        OutputWriteResult result;
         try
         {
             if(!Directory.Exists(request.TargetDirectory))
@@ -36,7 +36,7 @@ public sealed class OutputWriter : IOutputWriter
                         result = new(true, filePath, "File exists, overwritten.");
                         break;
                     default:
-                        result = null;
+                        result = new(false, filePath, "Unknown overwrite mode.");
                         break;
                 }
             }
@@ -45,7 +45,7 @@ public sealed class OutputWriter : IOutputWriter
                 result = new(true, filePath, null);
             }
 
-            if (result?.IsSuccess ?? throw new ArgumentOutOfRangeException(nameof(request.OverwriteMode), "Malformed request: Unknown overwrite mode!"))
+            if (result.IsSuccess)
             {
                 string tempPath = $"{filePath}.tmp";
                 await File.WriteAllBytesAsync(tempPath, request.Bytes, cancellationToken);
@@ -61,7 +61,7 @@ public sealed class OutputWriter : IOutputWriter
     }
 
     public async Task<IReadOnlyList<OutputWriteResult>> WriteManyAsync(
-                                                                          IEnumerable<OutputWriteRequest> requests, 
+                                                                          IEnumerable<OutputWriteRequest> requests,
                                                                           CancellationToken cancellationToken = default
                                                                       )
     {
