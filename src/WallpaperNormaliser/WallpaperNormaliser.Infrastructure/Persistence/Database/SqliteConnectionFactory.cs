@@ -10,7 +10,7 @@ public sealed class SqliteConnectionFactory
     public SqliteConnectionFactory(string connectionString, string pragmaSql)
     {
         _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
-        _pragmaSql        = pragmaSql        ?? throw new ArgumentNullException(nameof(pragmaSql));
+        _pragmaSql = pragmaSql ?? throw new ArgumentNullException(nameof(pragmaSql));
     }
 
     public IDbConnection Create()

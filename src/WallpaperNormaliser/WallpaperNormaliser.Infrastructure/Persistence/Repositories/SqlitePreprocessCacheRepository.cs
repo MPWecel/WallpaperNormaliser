@@ -14,19 +14,19 @@ public sealed class SqlitePreprocessCacheRepository(SqliteConnectionFactory conn
 
     public async Task<PreprocessCacheEntry?> GetAsync(string sourceHash, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string selectScript = """
                                        SELECT [SourceHash], [Resolution], [JpegQuality], [OutputBytes], [CreatedUtc], [ExpiresUtc] 
                                        FROM [PreprocessCache] 
                                        WHERE [SourceHash] = @sourceHash
                                     """;
-        PreprocessCacheEntry? result = await db.QueryFirstOrDefaultAsync<PreprocessCacheEntry>(selectScript, new { sourceHash });
+        PreprocessCacheEntry? result = await dbConn.QueryFirstOrDefaultAsync<PreprocessCacheEntry>(selectScript, new { sourceHash });
         return result;
     }
 
     public async Task UpsertAsync(PreprocessCacheEntry entry, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string upsertScript = """
                                        INSERT INTO [PreprocessCache]
                                            ([SourceHash], [Width], [Height], [Quality], [Bytes], [CreatedUtc], [ExpiresUtc])
@@ -37,31 +37,40 @@ public sealed class SqlitePreprocessCacheRepository(SqliteConnectionFactory conn
                                                          [CreatedUtc]=excluded.[CreatedUtc],
                                                          [ExpiresUtc]=excluded.[ExpiresUtc]
                                     """;
-        await db.ExecuteAsync(
-                                 upsertScript, 
-                                 new { SourceHash = entry.SourceHash, Width = entry.Resolution.Width, Height = entry.Resolution.Height, Quality = entry.Quality, Bytes = entry.OutputBytes, CreatedUtc = entry.CreatedUtc, ExpiresUtc = entry.ExpiresUtc }
-                             );
+        await dbConn.ExecuteAsync(
+                                     upsertScript, 
+                                     new 
+                                     { 
+                                         SourceHash = entry.SourceHash, 
+                                         Width = entry.Resolution.Width, 
+                                         Height = entry.Resolution.Height, 
+                                         Quality = entry.Quality, 
+                                         Bytes = entry.OutputBytes, 
+                                         CreatedUtc = entry.CreatedUtc, 
+                                         ExpiresUtc = entry.ExpiresUtc 
+                                     }
+                                 );
     }
 
     public async Task RemoveByHashAsync(string sourceHash, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string deleteScript = "DELETE FROM [PreprocessCache] WHERE [SourceHash]=@sourceHash";
-        await db.ExecuteAsync(deleteScript, new { sourceHash });
+        await dbConn.ExecuteAsync(deleteScript, new { sourceHash });
     }
 
     public async Task ClearAsync(CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string deleteScript = "DELETE FROM [PreprocessCache]";
-        await db.ExecuteAsync(deleteScript);
+        await dbConn.ExecuteAsync(deleteScript);
     }
 
     public async Task CleanupExpiredAsync(CancellationToken ct = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         DateTime utcNow = DateTime.UtcNow;
         const string deleteScript = "DELETE FROM [PreprocessCache] WHERE [ExpiresUtc] < @utcNow";
-        await db.ExecuteAsync(deleteScript, new { utcNow });
+        await dbConn.ExecuteAsync(deleteScript, new { utcNow });
     }
 }

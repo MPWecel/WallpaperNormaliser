@@ -1,19 +1,24 @@
-﻿namespace WallpaperNormaliser.Core.Models.Common;
+namespace WallpaperNormaliser.Core.Models.Common;
 public sealed record Resolution(uint Width, uint Height)
 {
-    public static Resolution? FromString(string input)
+    public static Resolution? FromString(string? input)
     {
-        char separator = 'x';
-        StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
-
-        if(!input.Contains(separator)) 
+        if (String.IsNullOrWhiteSpace(input))
             return null;
 
-        string[] chunks = input.Split(separator, options);
-        bool parseResult = UInt32.TryParse(chunks[0], out uint width) & 
-                           UInt32.TryParse(chunks[1], out uint height);
+        const char separator = 'x';
+        StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
 
-        if(!parseResult)
+        string[] chunks = input.Split(separator, options);
+        if (chunks.Length != 2)
+            return null;
+
+        uint width  = 0;
+        uint height = 0;
+        bool parseResult = UInt32.TryParse(chunks[0], out width) &&
+                           UInt32.TryParse(chunks[1], out height);
+
+        if (!parseResult)
             return null;
 
         return new Resolution(width, height);

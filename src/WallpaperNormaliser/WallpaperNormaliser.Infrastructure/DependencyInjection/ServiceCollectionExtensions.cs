@@ -7,6 +7,7 @@ using WallpaperNormaliser.Infrastructure.Background;
 using WallpaperNormaliser.Infrastructure.FileSystem;
 using WallpaperNormaliser.Infrastructure.Imaging;
 using WallpaperNormaliser.Infrastructure.Logging;
+using WallpaperNormaliser.Infrastructure.Persistence;
 using WallpaperNormaliser.Infrastructure.Persistence.Repositories;
 using WallpaperNormaliser.Infrastructure.Persistence.TypeHandlers;
 using WallpaperNormaliser.Infrastructure.Processing;
@@ -16,37 +17,39 @@ using WallpaperNormaliser.Infrastructure.Persistence.Database;
 namespace WallpaperNormaliser.Infrastructure.DependencyInjection;
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddDbPaths(this IServiceCollection services)
-        => services.AddSingleton<DbPaths>();
+    public static IServiceCollection AddDbPaths(this IServiceCollection services) => services.AddSingleton<DbPaths>();
 
     public static IServiceCollection AddConnectionFactory(this IServiceCollection services)
-        => services.AddSingleton<SqliteConnectionFactory>(sp =>
-        {
-            DbPaths paths = sp.GetRequiredService<DbPaths>();
-            paths.EnsureDatabaseDirectoryExists();
+        => services.AddSingleton<SqliteConnectionFactory>(
+                                                             sp =>
+                                                             {
+                                                                 DbPaths paths = sp.GetRequiredService<DbPaths>();
+                                                                 paths.EnsureDatabaseDirectoryExists();
 
-            string pragmaFilePath = Path.Combine(
-                AppContext.BaseDirectory,
-                "Persistence",
-                "Sql",
-                "SchemaCreation",
-                "000_Pragma.pragmasqlite");
+                                                                 string pragmaFilePath = Path.Combine(
+                                                                                                        AppContext.BaseDirectory,
+                                                                                                        "Persistence",
+                                                                                                        "Sql",
+                                                                                                        "SchemaCreation",
+                                                                                                        "000_Pragma.pragmasqlite"
+                                                                                                     );
 
-            if (!File.Exists(pragmaFilePath))
-                throw new FileNotFoundException(
-                    $"Required SQLite pragma file not found at '{pragmaFilePath}'.",
-                    pragmaFilePath);
+                                                                 if (!File.Exists(pragmaFilePath))
+                                                                     throw new FileNotFoundException($"Required SQLite pragma file not found at '{pragmaFilePath}'.", pragmaFilePath);
 
-            string pragmaSql = File.ReadAllText(pragmaFilePath);
-            if (string.IsNullOrWhiteSpace(pragmaSql))
-                throw new InvalidOperationException(
-                    $"SQLite pragma file at '{pragmaFilePath}' is empty.");
+                                                                 string pragmaSql = File.ReadAllText(pragmaFilePath);
+                                                                 if (String.IsNullOrWhiteSpace(pragmaSql))
+                                                                     throw new InvalidOperationException($"SQLite pragma file at '{pragmaFilePath}' is empty.");
 
-            return new SqliteConnectionFactory(paths.ConnectionString, pragmaSql);
-        });
+                                                                 return new SqliteConnectionFactory(paths.ConnectionString, pragmaSql);
+                                                             }
+                                                         );
 
     public static IServiceCollection AddMigrationRunner(this IServiceCollection services)
         => services.AddSingleton<MigrationRunner>();
+
+    public static IServiceCollection AddSettingsChangeNotifier(this IServiceCollection services)
+        => services.AddSingleton<ISettingsChangeNotifier, SettingsChangeNotifier>();
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {

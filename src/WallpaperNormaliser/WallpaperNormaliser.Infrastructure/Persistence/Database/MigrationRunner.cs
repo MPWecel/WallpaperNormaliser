@@ -13,30 +13,34 @@ public sealed class MigrationRunner(SqliteConnectionFactory connectionFactory)
 
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
 
-        await EnsureSchemaInfoTableAsync(db);
+        await EnsureSchemaInfoTableAsync(dbConn);
 
-        int currentVersion = await GetCurrentSchemaVersionAsync(db);
-        if (currentVersion >= LatestSchemaVersion)
+        int currentVersion = await GetCurrentSchemaVersionAsync(dbConn);
+        bool isMigrationRunUnnecessary = currentVersion >= LatestSchemaVersion;
+
+        if (isMigrationRunUnnecessary)
             return;
 
         for (int version = currentVersion + 1; version <= LatestSchemaVersion; version++)
         {
             IReadOnlyList<string> files = GetOrderedMigrationFiles(version);
-            if (files.Count == 0)
+            bool isFileListEmpty = files.Count == 0;
+
+            if (isFileListEmpty)
                 continue;
 
-            using IDbTransaction tx = db.BeginTransaction();
+            using IDbTransaction tx = dbConn.BeginTransaction();
             try
             {
                 foreach (string filePath in files)
                 {
                     string sql = await ReadSqlFromFileAsync(filePath, cancellationToken);
-                    await db.ExecuteAsync(sql, transaction: tx);
+                    await dbConn.ExecuteAsync(sql, transaction: tx);
                 }
 
-                await RecordVersionAsync(db, tx, version);
+                await RecordVersionAsync(dbConn, tx, version);
                 tx.Commit();
             }
             catch
@@ -56,25 +60,29 @@ public sealed class MigrationRunner(SqliteConnectionFactory connectionFactory)
                                   [AppliedUtc] TEXT NOT NULL
                               );
                            """;
-        return db.ExecuteAsync(sql);
+        Task<int> conditionalTableCreationTask = db.ExecuteAsync(sql);
+        return conditionalTableCreationTask;
     }
 
-    private static async Task<int> GetCurrentSchemaVersionAsync(IDbConnection db)
+    private static Task<int> GetCurrentSchemaVersionAsync(IDbConnection db)
     {
         const string sql = "SELECT COALESCE(MAX([Version]), 0) FROM [SchemaInfo];";
-        return await db.ExecuteScalarAsync<int>(sql);
+        Task<int> resultTask = db.ExecuteScalarAsync<int>(sql);
+        return resultTask;
     }
 
     private static IReadOnlyList<string> GetOrderedMigrationFiles(int version)
     {
-        string folder = Path.Combine(AppContext.BaseDirectory, MigrationsRootFolder, $"v{version:000}");
-        if (!Directory.Exists(folder))
-            return [];
+        IReadOnlyList<string> result = [];
+        string versionString = $"v{version:000}";
+        string folder = Path.Combine(AppContext.BaseDirectory, MigrationsRootFolder, versionString);
 
-        return Directory
-            .GetFiles(folder, "*.sql", SearchOption.TopDirectoryOnly)
-            .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        if (Directory.Exists(folder))
+            result = Directory.GetFiles(folder, "*.sql", SearchOption.TopDirectoryOnly)
+                              .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
+                              .ToList();
+
+        return result;
     }
 
     private static Task<string> ReadSqlFromFileAsync(string filePath, CancellationToken cancellationToken)
@@ -86,10 +94,13 @@ public sealed class MigrationRunner(SqliteConnectionFactory connectionFactory)
                               INSERT INTO [SchemaInfo] ([Version], [AppliedUtc])
                               VALUES (@Version, @AppliedUtc);
                            """;
-        return db.ExecuteAsync(sql, new
-        {
-            Version    = version,
-            AppliedUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)
-        }, tx);
+
+        var writeParameters = new
+                              {
+                                  Version = version,
+                                  AppliedUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)
+                              };
+        Task<int> writeTask = db.ExecuteAsync(sql, writeParameters, tx);
+        return writeTask;
     }
 }

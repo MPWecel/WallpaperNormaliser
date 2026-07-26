@@ -3,6 +3,7 @@
 using Dapper;
 
 using WallpaperNormaliser.Core.Contracts;
+using WallpaperNormaliser.Core.Enums;
 using WallpaperNormaliser.Core.Models.Processing;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
@@ -14,83 +15,86 @@ public sealed class SqliteRunRepository(SqliteConnectionFactory connectionFactor
 
     public async Task<ProcessingRun?> GetRunAsync(string runId, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
 
         const string selectScript = """
                                        SELECT [Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs]
                                        FROM [ProcessingRunItems]
                                        WHERE [Id] = @runId
                                     """;
-        ProcessingRun? fromDb = await db.QuerySingleOrDefaultAsync<ProcessingRun>(selectScript, new { runId });
-        return fromDb;
+        ProcessingRun? result = await dbConn.QuerySingleOrDefaultAsync<ProcessingRun>(selectScript, new { runId });
+        
+        return result;
     }
 
     public async Task<IReadOnlyList<ProcessingRun>> GetRecentRunsAsync(int take, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string queryString = """
-                                   SELECT [RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount]
-                                   FROM [ProcessingRuns]
-                                   ORDER BY [StartedUtc] DESC
-                                   LIMIT @take
-                                """;
-        IEnumerable<ProcessingRun>? rows = await db.QueryAsync<ProcessingRun>(queryString, new { take });
+                                      SELECT [RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount]
+                                      FROM [ProcessingRuns]
+                                      ORDER BY [StartedUtc] DESC
+                                      LIMIT @take
+                                   """;
+        IEnumerable<ProcessingRun>? rows = await dbConn.QueryAsync<ProcessingRun>(queryString, new { take });
         List<ProcessingRun> result = rows?.ToList() ?? [];
+        
         return result;
     }
 
     public async Task<IReadOnlyList<ProcessingRunItem>> GetRunItemsAsync(string runId, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string queryString = """
                                       SELECT [Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs], [CreatedUtc]
                                       FROM [ProcessingRunItems]
                                       WHERE [RunId]=@runId
                                       ORDER BY [Id]
                                    """;
-        IEnumerable<ProcessingRunItem>? rows = await db.QueryAsync<ProcessingRunItem>(queryString, new { runId });
+        IEnumerable<ProcessingRunItem>? rows = await dbConn.QueryAsync<ProcessingRunItem>(queryString, new { runId });
         List<ProcessingRunItem> result = rows?.ToList() ?? [];
+        
         return result;
     }
 
     public async Task CreateRunAsync(ProcessingRun run, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string insertScript = """
                                        INSERT INTO [ProcessingRuns] ([RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount])
                                        VALUES (@RunId, @StartedUtc, @FinishedUtc, @TotalFiles, @SuccessCount, @FailedCount, @SkippedCount)
                                     """;
-        await db.ExecuteAsync(insertScript, run);
+        await dbConn.ExecuteAsync(insertScript, run);
     }
 
     public async Task AddRunItemAsync(ProcessingRunItem item, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string insertScript = """
                                        INSERT INTO [ProcessingRunItems] ([Id], [RunId], [SourceHash], [FileName], [Status], [Message], [DurationMs], [CreatedUtc])
                                        VALUES (@Id, @RunId, @SourceHash, @FileName, @Status, @Message, @DurationMs, @CreatedUtc)
                                     """;
-        await db.ExecuteAsync(insertScript, item);
+        await dbConn.ExecuteAsync(insertScript, item);
     }
 
     public async Task UpsertRunAsync(ProcessingRun run, CancellationToken cancellationToken = default)
     {
-        using IDbConnection db = _connectionFactory.Create();
+        using IDbConnection dbConn = _connectionFactory.Create();
         const string selectScript = """
                                        SELECT [RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount]
                                        FROM [ProcessingRuns]
                                        WHERE [RunId] = @RunId
                                     """;
-        ProcessingRun? fromDb = await db.QuerySingleOrDefaultAsync<ProcessingRun>(selectScript, new { run.Id });
+        ProcessingRun? fromDb = await dbConn.QuerySingleOrDefaultAsync<ProcessingRun>(selectScript, new { run.Id });
         bool isRunInDb = (fromDb is not null);
 
         if (isRunInDb)
-            await UpdateRunAsync(db, run, fromDb!, cancellationToken).ConfigureAwait(false);
+            await UpdateRunAsync(dbConn, run, fromDb!, cancellationToken).ConfigureAwait(false);
         else
             await CreateRunAsync(run, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task UpdateRunAsync(IDbConnection db, ProcessingRun run, ProcessingRun fromDb, CancellationToken cancellationToken)
+    private static Task UpdateRunAsync(IDbConnection db, ProcessingRun run, ProcessingRun fromDb, CancellationToken cancellationToken)
     {
         List<string> setBuilderList = new(8);
 
@@ -115,14 +119,14 @@ public sealed class SqliteRunRepository(SqliteConnectionFactory connectionFactor
         string setInstruction = String.Join(", ", setBuilderList);
 
         string updateScript = $"""
-                                 UPDATE [ProcessingRunItems]
-                                 SET {setInstruction}
-                                 WHERE [Id] = {run.Id}
+                                  UPDATE [ProcessingRunItems]
+                                  SET {setInstruction}
+                                  WHERE [Id] = {run.Id}
                               """;
 
-        await db.ExecuteAsync(updateScript);
+        return db.ExecuteAsync(updateScript);
     }
 
-    public async Task FinaliseRunAsync(ProcessingRun run, CancellationToken cancellationToken = default)
-        => await UpsertRunAsync(run, cancellationToken);
+    public async Task FinaliseRunAsync(ProcessingRun run, CancellationToken cancellationToken = default) 
+        => await UpsertRunAsync(run with { Status = EProcessingStatus.Completed}, cancellationToken);
 }

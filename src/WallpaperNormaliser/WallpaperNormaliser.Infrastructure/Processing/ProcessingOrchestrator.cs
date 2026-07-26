@@ -7,7 +7,13 @@ using WallpaperNormaliser.Core.Models.Output;
 using WallpaperNormaliser.Core.Enums;
 
 namespace WallpaperNormaliser.Infrastructure.Processing;
-public sealed class ProcessingOrchestrator(IInputScanner scanner, IHashService hash, IImageProcessor processor, IOutputWriter writer, IManifestRepository manifest) : IProcessingOrchestrator
+public sealed class ProcessingOrchestrator(
+                                              IInputScanner scanner, 
+                                              IHashService hash, 
+                                              IImageProcessor processor, 
+                                              IOutputWriter writer, 
+                                              IManifestRepository manifest
+                                          ) : IProcessingOrchestrator
 {
     private readonly IInputScanner _scanner = scanner;
     private readonly IHashService _hashService = hash;
@@ -33,17 +39,20 @@ public sealed class ProcessingOrchestrator(IInputScanner scanner, IHashService h
             var hashTask = _hashService.ComputeAsync(file, cancellationToken).ConfigureAwait(false);
 
             ImageProcessingResult processed = await _imageProcessor.ProcessAsync(file, request.ProcessingOptions, cancellationToken).ConfigureAwait(false);
+            bool processedImageHasData = processed is { OutputBytes: not null };
 
-            if(processed is { OutputBytes: not null})
+            if (processedImageHasData)
             {
-                string folder = Path.Combine("OUTPUT", item.FileName.Replace('.','_'));
+                const string outputFolderName = "OUTPUT";
+                string sanitisedFileName = item.FileName.Replace('.', '_');
+                string folder = Path.Combine(outputFolderName, sanitisedFileName);
 
-                OutputWriteRequest writeRequest = new(folder, item.FileName, processed.OutputBytes, request.OverwriteMode);
+                OutputWriteRequest writeRequest = new(folder, item.FileName, processed.OutputBytes!, request.OverwriteMode);
 
                 await _outputWriter.WriteAsync(writeRequest, cancellationToken);
             }
 
-            var hash = await hashTask;
+            string hash = await hashTask;
             file = file with { Hash = hash };
 
             FileProcessResult fileProcessResult = new(item.FileName, processed.Status, processed.ErrorMessage);

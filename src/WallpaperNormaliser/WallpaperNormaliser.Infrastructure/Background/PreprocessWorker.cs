@@ -8,12 +8,12 @@ using WallpaperNormaliser.Core.Models.Settings;
 
 namespace WallpaperNormaliser.Infrastructure.Background;
 public sealed class PreprocessWorker(
-    IInputScanner scanner,
-    IImageProcessor imageProcessor,
-    IHashService hashService,
-    IPreprocessCacheRepository cacheRepository,
-    ISettingsRepository settingsRepository
-)
+                                        IInputScanner scanner,
+                                        IImageProcessor imageProcessor,
+                                        IHashService hashService,
+                                        IPreprocessCacheRepository cacheRepository,
+                                        ISettingsRepository settingsRepository
+                                    )
 {
     private const string InputSubDirectory = "INPUT";
 
@@ -32,14 +32,14 @@ public sealed class PreprocessWorker(
         ScanResult scan = await scanner.ScanAsync(scanOptions, cancellationToken);
 
         ProcessingOptions processingOptions = new(
-            settings.Resolution,
-            settings.Quality,
-            ApplyExifOrientation: true,
-            WarnOnSmallImages: false,
-            MinimumWidth: 640,
-            MinimumHeight: 480,
-            DryRun: false
-        );
+                                                     settings.Resolution,
+                                                     settings.Quality,
+                                                     ApplyExifOrientation: true,
+                                                     WarnOnSmallImages: false,
+                                                     MinimumWidth: 640,
+                                                     MinimumHeight: 480,
+                                                     DryRun: false
+                                                 );
 
         DateTime expiry = DateTime.UtcNow.AddMinutes(settings.CacheSettings.ExpirationMinutes ?? 60);
 
@@ -65,13 +65,13 @@ public sealed class PreprocessWorker(
                 continue;
 
             PreprocessCacheEntry entry = new(
-                hash,
-                settings.Resolution,
-                settings.Quality,
-                result.OutputBytes,
-                DateTime.UtcNow,
-                expiry
-            );
+                                                hash,
+                                                settings.Resolution,
+                                                settings.Quality,
+                                                result.OutputBytes,
+                                                DateTime.UtcNow,
+                                                expiry
+                                            );
 
             await cacheRepository.UpsertAsync(entry, cancellationToken);
         }

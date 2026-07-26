@@ -23,6 +23,7 @@ public static class ServiceRegistration
         services.AddDbPaths();
         services.AddConnectionFactory();
         services.AddMigrationRunner();
+        services.AddSettingsChangeNotifier();
         services.AddInfrastructure();
 
         services.AddSingleton<SettingsValidator>()

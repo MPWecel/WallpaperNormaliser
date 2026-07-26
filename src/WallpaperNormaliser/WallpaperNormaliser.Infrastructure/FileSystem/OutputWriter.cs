@@ -60,9 +60,13 @@ public sealed class OutputWriter : IOutputWriter
         return result;
     }
 
-    public async Task<IReadOnlyList<OutputWriteResult>> WriteManyAsync(IEnumerable<OutputWriteRequest> requests, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<OutputWriteResult>> WriteManyAsync(
+                                                                          IEnumerable<OutputWriteRequest> requests, 
+                                                                          CancellationToken cancellationToken = default
+                                                                      )
     {
-        IEnumerable<Task<OutputWriteResult>> tasks = requests.Select(x=>WriteAsync(x, cancellationToken)).ToList();
+        IEnumerable<Task<OutputWriteResult>> tasks = requests.Select(x=>WriteAsync(x, cancellationToken))
+                                                             .ToList();
         List<OutputWriteResult> taskResults = (await Task.WhenAll(tasks).ConfigureAwait(false)).ToList();
         return taskResults;
     }

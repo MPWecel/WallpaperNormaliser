@@ -18,8 +18,8 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
     private int _debounceMs = 300;
 
     public event EventHandler<FileDiscoveredEventArgs>? FileDiscovered;
-    public event EventHandler<FileChangedEventArgs>?   FileChanged;
-    public event EventHandler<FileRemovedEventArgs>?   FileRemoved;
+    public event EventHandler<FileChangedEventArgs>? FileChanged;
+    public event EventHandler<FileRemovedEventArgs>? FileRemoved;
 
     public Task<ScanResult> ScanAsync(ScanOptions options, CancellationToken cancellationToken = default)
     {
@@ -40,17 +40,19 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
             if (!IsSupportedExtension(extension))
                 continue;
 
-            FileInfo info    = new(file);
-            string relative  = Path.GetRelativePath(options.InputDirectory, file);
+            FileInfo info = new(file);
+            string relative = Path.GetRelativePath(options.InputDirectory, file);
 
-            items.Add(new ScanItem(
-                Path.GetFileName(file),
-                relative,
-                file,
-                FileFormatInfo.FromExtension(extension)!,
-                info.Length,
-                info.LastWriteTimeUtc
-            ));
+            items.Add(
+                         new ScanItem(
+                                         Path.GetFileName(file),
+                                         relative,
+                                         file,
+                                         FileFormatInfo.FromExtension(extension)!,
+                                         info.Length,
+                                         info.LastWriteTimeUtc
+                                     )
+                     );
         }
 
         ScanResult result = new(items, items.Count, allFiles.Length - items.Count, DateTime.UtcNow - start);
@@ -69,8 +71,8 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
         _watcher = new FileSystemWatcher(options.InputDirectory)
         {
             IncludeSubdirectories = options.IsRecursive,
-            NotifyFilter          = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
-            EnableRaisingEvents   = true
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+            EnableRaisingEvents = true
         };
 
         _watcher.Created += OnCreated;
@@ -116,7 +118,8 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
 
     private void OnDeleted(object sender, FileSystemEventArgs e)
     {
-        if (!IsSupportedExtension(Path.GetExtension(e.Name ?? e.FullPath)))
+        string ext = Path.GetExtension(e.Name ?? e.FullPath);
+        if (!IsSupportedExtension(ext))
             return;
 
         CancelDebounce(e.FullPath);
@@ -139,7 +142,8 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
 
     private void ScheduleDiscovery(string fullPath, string? name)
     {
-        if (!IsSupportedExtension(Path.GetExtension(name ?? fullPath)))
+        string ext = Path.GetExtension(name ?? fullPath);
+        if (!IsSupportedExtension(ext))
             return;
 
         Debounce(
@@ -158,7 +162,8 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
 
     private void ScheduleChange(string fullPath, string? name)
     {
-        if (!IsSupportedExtension(Path.GetExtension(name ?? fullPath)))
+        string ext = Path.GetExtension(name ?? fullPath);
+        if (!IsSupportedExtension(ext))
             return;
 
         Debounce(
@@ -192,7 +197,8 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
                 .ContinueWith(
                                 t =>
                                 {
-                                    if (!t.IsCanceled && !watchToken.IsCancellationRequested)
+                                    bool shouldNotCancel = !t.IsCanceled && !watchToken.IsCancellationRequested;
+                                    if (shouldNotCancel)
                                     {
                                         _debouncers.TryRemove(fullPath, out _);
                                         raise();
@@ -216,7 +222,7 @@ public sealed class InputScanner(ISettingsRepository settingsRepository) : IInpu
     private static ScanItem BuildScanItem(string fullPath, string? name, FileInfo info)
     {
         string fileName = Path.GetFileName(fullPath);
-        string ext      = Path.GetExtension(fullPath);
+        string ext = Path.GetExtension(fullPath);
         FileFormatInfo format = FileFormatInfo.FromExtension(ext) ?? new FileFormatInfo(EFileFormat.Unknown);
 
         ScanItem result = new(
