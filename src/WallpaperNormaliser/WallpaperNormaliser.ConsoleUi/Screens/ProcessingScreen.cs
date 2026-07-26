@@ -13,12 +13,12 @@ public sealed class ProcessingScreen(
     IProcessingOrchestrator orchestrator,
     SettingsValidator settingsValidator,
     ISettingsRepository settingsRepository,
-    WorkingDirectoryResolver workingDirectoryResolver)
+    IWorkingDirectoryResolver workingDirectoryResolver)
 {
     private readonly IProcessingOrchestrator _orchestrator = orchestrator;
     private readonly SettingsValidator _settingsValidator = settingsValidator;
     private readonly ISettingsRepository _settingsRepository = settingsRepository;
-    private readonly WorkingDirectoryResolver _workingDirectoryResolver = workingDirectoryResolver;
+    private readonly IWorkingDirectoryResolver _workingDirectoryResolver = workingDirectoryResolver;
 
     public async Task ShowAsync()
     {

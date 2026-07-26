@@ -12,11 +12,10 @@ public sealed class PreprocessWorker(
                                         IImageProcessor imageProcessor,
                                         IHashService hashService,
                                         IPreprocessCacheRepository cacheRepository,
-                                        ISettingsRepository settingsRepository
+                                        ISettingsRepository settingsRepository,
+                                        IWorkingDirectoryResolver workingDirectoryResolver
                                     )
 {
-    private const string InputSubDirectory = "INPUT";
-
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         AppSettings settings = await settingsRepository.GetAsync(cancellationToken);
@@ -26,7 +25,7 @@ public sealed class PreprocessWorker(
 
         await cacheRepository.CleanupExpiredAsync(cancellationToken);
 
-        string inputDirectory = Path.Combine(AppContext.BaseDirectory, settings.RootDirectory, InputSubDirectory);
+        string inputDirectory = workingDirectoryResolver.GetInputDirectory();
 
         ScanOptions scanOptions = new(inputDirectory, settings.ScanSettings.IsRecursive, IsRaiseEventsOn: false, IsComputeHashesOn: false);
         ScanResult scan = await scanner.ScanAsync(scanOptions, cancellationToken);

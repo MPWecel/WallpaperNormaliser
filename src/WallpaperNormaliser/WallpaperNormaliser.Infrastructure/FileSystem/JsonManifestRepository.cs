@@ -12,24 +12,13 @@ public sealed class JsonManifestRepository : IManifestRepository
     public JsonManifestRepository(string manifestDirectory)
     {
         _manifestDirectory = manifestDirectory;
-
-        if(!Directory.Exists(_manifestDirectory))
-            Directory.CreateDirectory(_manifestDirectory);
     }
 
-    public JsonManifestRepository() : this(
-                                              Path.GetFullPath(
-                                                                  Path.Combine(
-                                                                                  AppContext.BaseDirectory,
-                                                                                  "..",
-                                                                                  "..",
-                                                                                  "..",
-                                                                                  "..",
-                                                                                  "APPLICATION_WORKING_DIRECTORY",
-                                                                                  "MANIFEST"
-                                                                              )
-                                                              )
-                                          ) { }
+    private void EnsureDirectoryExists()
+    {
+        if (!Directory.Exists(_manifestDirectory))
+            Directory.CreateDirectory(_manifestDirectory);
+    }
 
     public async Task<ManifestDocument?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -95,6 +84,8 @@ public sealed class JsonManifestRepository : IManifestRepository
 
     public async Task SaveAsync(ManifestDocument document, CancellationToken cancellationToken = default)
     {
+        EnsureDirectoryExists();
+
         string fileName = $"{SanitizeFileName(document.SourceFileName)}_{document.SourceHash}.json";
         string path = Path.Combine(_manifestDirectory, fileName);
         JsonSerializerOptions options = new() { WriteIndented = true };

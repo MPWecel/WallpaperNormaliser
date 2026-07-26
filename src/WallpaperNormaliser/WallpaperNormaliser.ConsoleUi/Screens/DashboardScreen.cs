@@ -1,14 +1,13 @@
 using Spectre.Console;
 
 using WallpaperNormaliser.ConsoleUi.Models.ViewModels;
-using WallpaperNormaliser.ConsoleUi.Services;
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Settings;
 
 namespace WallpaperNormaliser.ConsoleUi.Screens;
-public sealed class DashboardScreen(WorkingDirectoryResolver resolver, ISettingsRepository settingsRepository)
+public sealed class DashboardScreen(IWorkingDirectoryResolver resolver, ISettingsRepository settingsRepository)
 {
-    private readonly WorkingDirectoryResolver _paths = resolver;
+    private readonly IWorkingDirectoryResolver _paths = resolver;
     private readonly ISettingsRepository _settingsRepository = settingsRepository;
 
     public async Task ShowAsync()
@@ -17,7 +16,6 @@ public sealed class DashboardScreen(WorkingDirectoryResolver resolver, ISettings
         AnsiConsole.MarkupLine(DashboardConstants.Title);
 
         AppSettings settings = await _settingsRepository.GetAsync();
-        string root = _paths.GetRoot();
 
         SearchOption inputSearch = settings.ScanSettings.IsRecursive
             ? SearchOption.AllDirectories
@@ -25,9 +23,9 @@ public sealed class DashboardScreen(WorkingDirectoryResolver resolver, ISettings
 
         DirectoryStatusViewModel[] statuses =
         [
-            BuildStatus(root, DashboardConstants.FolderInput,    inputSearch),
-            BuildStatus(root, DashboardConstants.FolderOutput,   SearchOption.AllDirectories),
-            BuildStatus(root, DashboardConstants.FolderManifest, SearchOption.TopDirectoryOnly),
+            BuildStatus(DashboardConstants.FolderInput,    _paths.GetInputDirectory(),    inputSearch),
+            BuildStatus(DashboardConstants.FolderOutput,   _paths.GetOutputDirectory(),   SearchOption.AllDirectories),
+            BuildStatus(DashboardConstants.FolderManifest, _paths.GetManifestDirectory(), SearchOption.TopDirectoryOnly),
         ];
 
         Table table = new();
@@ -52,21 +50,20 @@ public sealed class DashboardScreen(WorkingDirectoryResolver resolver, ISettings
         Console.ReadKey(true);
     }
 
-    private static DirectoryStatusViewModel BuildStatus(string rootDirectory, string folderName, SearchOption searchOption)
+    private static DirectoryStatusViewModel BuildStatus(string label, string path, SearchOption searchOption)
     {
-        string path = Path.Combine(rootDirectory, folderName);
         bool exists = Directory.Exists(path);
         if (!exists)
-            return new DirectoryStatusViewModel(folderName, false, 0);
+            return new DirectoryStatusViewModel(label, false, 0);
 
         try
         {
             int count = Directory.EnumerateFiles(path, "*", searchOption).Count();
-            return new DirectoryStatusViewModel(folderName, true, count);
+            return new DirectoryStatusViewModel(label, true, count);
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
         {
-            return new DirectoryStatusViewModel(folderName, true, -1);
+            return new DirectoryStatusViewModel(label, true, -1);
         }
     }
 }

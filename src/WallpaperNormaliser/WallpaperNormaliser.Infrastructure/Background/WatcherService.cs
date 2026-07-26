@@ -9,11 +9,11 @@ namespace WallpaperNormaliser.Infrastructure.Background;
 public sealed class WatcherService(
                                       IInputScanner scanner,
                                       ISettingsRepository settingsRepository,
-                                      ILogRepository logRepository
+                                      ILogRepository logRepository,
+                                      IWorkingDirectoryResolver workingDirectoryResolver
                                   ) : IDisposable
 {
     private const string LogCategory = "WatcherService";
-    private const string InputSubDirectory = "INPUT";
 
     private CancellationTokenSource? _cts;
     private bool _isRunning;
@@ -28,7 +28,7 @@ public sealed class WatcherService(
         if (!settings.ScanSettings.IsWatchEnabled)
             return;
 
-        string inputDirectory = Path.Combine(AppContext.BaseDirectory, settings.RootDirectory, InputSubDirectory);
+        string inputDirectory = workingDirectoryResolver.GetInputDirectory();
 
         if (!Directory.Exists(inputDirectory))
         {

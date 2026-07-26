@@ -1,7 +1,9 @@
-﻿namespace WallpaperNormaliser.ConsoleUi.Services;
-public sealed class StartupValidator(WorkingDirectoryResolver workingDirectoryResolver)
+using WallpaperNormaliser.Core.Contracts;
+
+namespace WallpaperNormaliser.ConsoleUi.Services;
+public sealed class StartupValidator(IWorkingDirectoryResolver workingDirectoryResolver)
 {
-    private readonly WorkingDirectoryResolver _workingDirectoryResolver = workingDirectoryResolver;
+    private readonly IWorkingDirectoryResolver _workingDirectoryResolver = workingDirectoryResolver;
 
     public Task<StartupValidationResult> ValidateAsync()
     {

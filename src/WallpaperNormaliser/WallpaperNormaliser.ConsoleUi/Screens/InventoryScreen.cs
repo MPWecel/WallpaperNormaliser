@@ -1,14 +1,13 @@
 ﻿using Spectre.Console;
 
 using WallpaperNormaliser.Core.Contracts;
-using WallpaperNormaliser.ConsoleUi.Services;
 using WallpaperNormaliser.Core.Models.Scan;
 
 namespace WallpaperNormaliser.ConsoleUi.Screens;
-public sealed class InventoryScreen(IInputScanner scanner, WorkingDirectoryResolver paths)
+public sealed class InventoryScreen(IInputScanner scanner, IWorkingDirectoryResolver paths)
 {
     private readonly IInputScanner _scanner = scanner;
-    private readonly WorkingDirectoryResolver _paths = paths;
+    private readonly IWorkingDirectoryResolver _paths = paths;
 
     public async Task ShowAsync()
     {

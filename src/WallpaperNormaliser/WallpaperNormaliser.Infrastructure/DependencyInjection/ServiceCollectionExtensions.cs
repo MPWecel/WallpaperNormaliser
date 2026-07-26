@@ -53,12 +53,16 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
+        services.AddSingleton<IWorkingDirectoryResolver, WorkingDirectoryResolver>();
+
         services.AddScoped<IHashService, Sha256HashService>();
 
-        services.AddScoped<IImageProcessor, ImageSharpProcessor>()
-            ;
-        services.AddScoped<IManifestRepository, JsonManifestRepository>()
-            ;
+        services.AddScoped<IImageProcessor, ImageSharpProcessor>();
+
+        services.AddScoped<IManifestRepository>(sp =>
+            new JsonManifestRepository(
+                sp.GetRequiredService<IWorkingDirectoryResolver>().GetManifestDirectory()));
+
         services.AddScoped<IInputScanner, InputScanner>()
                 .AddScoped<IOutputWriter, OutputWriter>();
         

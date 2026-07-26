@@ -22,8 +22,7 @@ public static class ServiceRegistration
 
         services.AddSingleton<SettingsValidator>()
                 .AddSingleton<StartupValidator>()
-                .AddSingleton<ThemeMarkupProvider>()
-                .AddSingleton<WorkingDirectoryResolver>();
+                .AddSingleton<ThemeMarkupProvider>();
 
         services.AddScoped<ISettingsApplicationService, SettingsApplicationService>();
 
