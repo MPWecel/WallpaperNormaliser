@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 using WallpaperNormaliser.ConsoleUi.Bootstrap;
 using WallpaperNormaliser.ConsoleUi.Navigation;
 

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using WallpaperNormaliser.ConsoleUi.ApplicationServices.Interfaces;
+﻿using WallpaperNormaliser.ConsoleUi.ApplicationServices.Interfaces;
 using WallpaperNormaliser.ConsoleUi.Models.ViewModels;
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Settings;

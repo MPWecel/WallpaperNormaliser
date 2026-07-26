@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WallpaperNormaliser.Core.Models.Common;
+﻿using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Scan;
 
 namespace WallpaperNormaliser.ConsoleUi.Models.ViewModels;

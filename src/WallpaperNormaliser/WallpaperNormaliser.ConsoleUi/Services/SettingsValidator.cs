@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using WallpaperNormaliser.Core.Models.Settings;
 
 namespace WallpaperNormaliser.ConsoleUi.Services;

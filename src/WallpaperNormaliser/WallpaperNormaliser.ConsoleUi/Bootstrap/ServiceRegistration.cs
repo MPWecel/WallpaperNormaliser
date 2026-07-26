@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using WallpaperNormaliser.ConsoleUi.ApplicationServices;
 using WallpaperNormaliser.ConsoleUi.ApplicationServices.Interfaces;
 using WallpaperNormaliser.ConsoleUi.Navigation;
