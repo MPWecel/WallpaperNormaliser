@@ -37,7 +37,7 @@ public sealed class JsonManifestRepository : IManifestRepository
         if (string.IsNullOrEmpty(file))
             return null;
 
-        string json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
+        string json = await File.ReadAllTextAsync(file, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
         return JsonSerializer.Deserialize<ManifestDocument>(json);
     }
 
@@ -49,7 +49,7 @@ public sealed class JsonManifestRepository : IManifestRepository
 
         if (!String.IsNullOrEmpty(file))
         {
-            string? json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
+            string? json = await File.ReadAllTextAsync(file, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
             result = JsonSerializer.Deserialize<ManifestDocument>(json);
         }
 
@@ -63,7 +63,7 @@ public sealed class JsonManifestRepository : IManifestRepository
 
         if (!String.IsNullOrEmpty(file))
         {
-            string? json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
+            string? json = await File.ReadAllTextAsync(file, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
             result = JsonSerializer.Deserialize<ManifestDocument>(json);
         }
 
@@ -83,7 +83,7 @@ public sealed class JsonManifestRepository : IManifestRepository
         if (files.Any())
             foreach(var file in files)
             {
-                string? json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
+                string? json = await File.ReadAllTextAsync(file, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                 ManifestDocument? doc = JsonSerializer.Deserialize<ManifestDocument>(json);
 
                 if(doc is not null)
@@ -100,7 +100,7 @@ public sealed class JsonManifestRepository : IManifestRepository
         JsonSerializerOptions options = new() { WriteIndented = true };
         string json = JsonSerializer.Serialize(document, options);
 
-        await File.WriteAllTextAsync(path, json, Encoding.Default, cancellationToken).ConfigureAwait(false);
+        await File.WriteAllTextAsync(path, json, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -116,7 +116,7 @@ public sealed class JsonManifestRepository : IManifestRepository
         EnumerationOptions options = new() { MatchCasing = MatchCasing.CaseInsensitive, IgnoreInaccessible = true };
         foreach (string file in Directory.EnumerateFiles(_manifestDirectory, "*.json", options))
         {
-            string json = await File.ReadAllTextAsync(file, Encoding.Default, cancellationToken).ConfigureAwait(false);
+            string json = await File.ReadAllTextAsync(file, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
             ManifestDocument? doc = JsonSerializer.Deserialize<ManifestDocument>(json);
             if (doc?.Id == id)
                 return file;
