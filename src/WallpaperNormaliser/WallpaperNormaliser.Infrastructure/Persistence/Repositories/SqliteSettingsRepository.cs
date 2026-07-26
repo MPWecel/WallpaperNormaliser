@@ -78,8 +78,18 @@ public sealed class SqliteSettingsRepository(
                                                                    [UpdatedUtc] = excluded.[UpdatedUtc];
                               """;
 
-        await dbConn.ExecuteAsync(upsert, rows, transaction);
-        transaction.Commit();
+        try
+        {
+            await dbConn.ExecuteAsync(upsert, rows, transaction);
+            transaction.Commit();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            transaction.Rollback();
+            throw new InvalidOperationException(
+                $"[SqliteSettingsRepository.SaveAsync] Transaction failed. SQL: {upsert}",
+                ex);
+        }
 
         _changeNotifier.Notify(settings);
     }

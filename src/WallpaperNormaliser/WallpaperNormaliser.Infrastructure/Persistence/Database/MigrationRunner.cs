@@ -43,10 +43,12 @@ public sealed class MigrationRunner(SqliteConnectionFactory connectionFactory)
                 await RecordVersionAsync(dbConn, tx, version);
                 tx.Commit();
             }
-            catch
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 tx.Rollback();
-                throw;
+                throw new InvalidOperationException(
+                    $"[MigrationRunner.RunAsync] Migration to version {version} failed.",
+                    ex);
             }
         }
     }

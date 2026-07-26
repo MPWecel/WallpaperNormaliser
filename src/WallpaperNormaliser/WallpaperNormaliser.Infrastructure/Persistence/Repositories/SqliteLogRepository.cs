@@ -73,10 +73,20 @@ public sealed class SqliteLogRepository(SqliteConnectionFactory connectionFactor
         using IDbConnection dbConn = _connectionFactory.Create();
         using IDbTransaction tx = dbConn.BeginTransaction();
 
-        foreach (LogEntry item in entries)
-            await WriteInternalAsync(dbConn, tx, item, cancellationToken);
+        try
+        {
+            foreach (LogEntry item in entries)
+                await WriteInternalAsync(dbConn, tx, item, cancellationToken);
 
-        tx.Commit();
+            tx.Commit();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            tx.Rollback();
+            throw new InvalidOperationException(
+                "[SqliteLogRepository.WriteManyAsync] Batch INSERT into [Logs] failed.",
+                ex);
+        }
     }
 
     public async Task<int> CleanupAsync(LogRetentionPolicy policy, CancellationToken cancellationToken = default)

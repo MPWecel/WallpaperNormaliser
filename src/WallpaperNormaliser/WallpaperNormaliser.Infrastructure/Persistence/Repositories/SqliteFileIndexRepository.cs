@@ -91,11 +91,21 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
                                                           [Bytes]=excluded.[Bytes],
                                                           [LastSeenUtc]=excluded.[LastSeenUtc]
                      """;
-        foreach(var entry in entries)
+        try
         {
-            await db.ExecuteAsync(query, entry, transaction);
+            foreach(var entry in entries)
+            {
+                await db.ExecuteAsync(query, entry, transaction);
+            }
+            transaction.Commit();
         }
-        transaction.Commit();
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            transaction.Rollback();
+            throw new InvalidOperationException(
+                $"[SqliteFileIndexRepository.UpsertManyAsync] Transaction failed. SQL: {query}",
+                ex);
+        }
     }
 
     public async Task RemoveMissingAsync(IReadOnlyCollection<string> existingRelativePaths, CancellationToken ct = default)
@@ -103,13 +113,24 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
         using IDbConnection db = _connectionFactory.Create();
         using IDbTransaction transaction = db.BeginTransaction();
         const string selecthPathsQuery = "SELECT [RelativePath] FROM [FileIndex]";
-        IEnumerable<string> all = await db.QueryAsync<string>(selecthPathsQuery);
-        IEnumerable<string> remove = all.Except(existingRelativePaths);
         const string deleteCommand = "DELETE FROM [FileIndex] WHERE [RelativePath]=@path";
 
-        foreach (var path in remove) 
-            await db.ExecuteAsync(deleteCommand, new { path }, transaction);
+        try
+        {
+            IEnumerable<string> all = await db.QueryAsync<string>(selecthPathsQuery);
+            IEnumerable<string> remove = all.Except(existingRelativePaths);
 
-        transaction.Commit();
+            foreach (var path in remove)
+                await db.ExecuteAsync(deleteCommand, new { path }, transaction);
+
+            transaction.Commit();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            transaction.Rollback();
+            throw new InvalidOperationException(
+                $"[SqliteFileIndexRepository.RemoveMissingAsync] Transaction failed. SQL: {deleteCommand}",
+                ex);
+        }
     }
 }
