@@ -11,11 +11,36 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
 {
     private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
+    /*
+     * Rewrite every query against the real schema ([SourceHash], [FileName], [Format], [Width], [Height], [SizeBytes], [LastWriteUtc], [IsDuplicate]). 
+     * Add a UNIQUE constraint or index on [SourceHash] in migration 003, then use ON CONFLICT([SourceHash]). 
+     * Extend FileIndexEntry to carry the columns Dapper needs to map (FileName, Format, LastWriteUtc, IsDuplicate), or split the model into a DTO + a Dapper row record. 
+     * Decompose Resolution into Width/Height parameters at the boundary.
+     */
+
+    /*
+     * CREATE TABLE IF NOT EXISTS [FileIndex]
+     * (
+     *  [Id] TEXT PRIMARY KEY,
+     *  [SourceHash] TEXT NOT NULL,
+     *  [FileName] TEXT NOT NULL,
+     *  [RelativePath] TEXT NOT NULL,
+     *  [FullPath] TEXT,
+     *  [Format] INTEGER NOT NULL,
+     *  [SizeBytes] INTEGER NOT NULL,
+     *  [Width] INTEGER,
+     *  [Height] INTEGER,
+     *  [LastSeenUtc] TEXT NOT NULL,
+     *  [LastWriteUtc] TEXT,
+     *  [IsDuplicate] INTEGER NOT NULL DEFAULT 0
+     * );
+     */
+
     public async Task<FileIndexEntry?> GetByHashAsync(string hash, CancellationToken cancellationToken = default)
     {
         using IDbConnection db = _connectionFactory.Create();
         const string queryString = """
-                                      SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height] [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                      SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                       FROM [FileIndex]
                                       WHERE [SourceHash] = @SourceHash
                                    """;
@@ -27,7 +52,7 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string queryString = """
-                                      SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height] [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                      SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                       FROM [FileIndex]
                                       WHERE [RelativePath] = @relativePath
                                    """;
@@ -39,7 +64,7 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string query = """
-                                SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height] [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                 FROM [FileIndex]
                                 WHERE [SourceHash]=@SourceHash
                              """;
@@ -52,7 +77,7 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string query = """
-                                SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height] [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                 FROM [FileIndex]
                                 ORDER BY [RelativePath]
                              """;

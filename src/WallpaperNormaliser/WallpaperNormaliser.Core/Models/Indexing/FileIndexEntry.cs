@@ -3,10 +3,12 @@
 namespace WallpaperNormaliser.Core.Models.Indexing;
 public sealed record FileIndexEntry(
                                        string Id,
-                                       string Hash,
+                                       string SourceHash,
                                        string RelativePath,
                                        string? FullPath,
                                        Resolution Resolution,
                                        long SizeBytes,
-                                       DateTime LastSeenUtc
+                                       DateTime LastSeenUtc,
+                                       DateTime LastWriteUtc,
+                                       bool IsDuplicate = false
                                    );
