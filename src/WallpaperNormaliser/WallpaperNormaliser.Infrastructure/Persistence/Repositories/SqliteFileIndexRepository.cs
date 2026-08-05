@@ -13,6 +13,21 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
 {
     private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
+    private const string UpsertSql = """
+                                        INSERT INTO [FileIndex] ([Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate])
+                                        VALUES (@Id, @SourceHash, @FileName, @RelativePath, @FullPath, @Format, @SizeBytes, @Width, @Height, @LastSeenUtc, @LastWriteUtc, @IsDuplicate)
+                                        ON CONFLICT([SourceHash]) DO UPDATE SET [FileName]=excluded.[FileName],
+                                                                                [RelativePath]=excluded.[RelativePath],
+                                                                                [FullPath]=excluded.[FullPath],
+                                                                                [Format]=excluded.[Format],
+                                                                                [SizeBytes]=excluded.[SizeBytes],
+                                                                                [Width]=excluded.[Width],
+                                                                                [Height]=excluded.[Height],
+                                                                                [LastSeenUtc]=excluded.[LastSeenUtc],
+                                                                                [LastWriteUtc]=excluded.[LastWriteUtc],
+                                                                                [IsDuplicate]=excluded.[IsDuplicate]
+                                     """;
+
     public async Task<FileIndexEntry?> GetByHashAsync(string hash, CancellationToken cancellationToken = default)
     {
         using IDbConnection db = _connectionFactory.Create();
@@ -22,9 +37,9 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
                                              [Format], [SizeBytes], [Width], [Height], 
                                              [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                       FROM [FileIndex]
-                                      WHERE [SourceHash] = @SourceHash
+                                      WHERE [SourceHash] = @hash
                                    """;
-        FileIndexEntry? result = (await db.QuerySingleOrDefaultAsync<FileIndexRow>(queryString, new { SourceHash = hash }))
+        FileIndexEntry? result = (await db.QuerySingleOrDefaultAsync<FileIndexRow>(queryString, new { hash }))
                                     ?.FromRow() ?? null;
         return result;
     }
@@ -54,9 +69,9 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
                                        [Format], [SizeBytes], [Width], [Height], 
                                        [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                 FROM [FileIndex]
-                                WHERE [SourceHash]=@SourceHash
+                                WHERE [SourceHash]=@hash
                              """;
-        IEnumerable<FileIndexEntry> rows = (await db.QueryAsync<FileIndexRow>(query, new { SourceHash = hash }))
+        IEnumerable<FileIndexEntry> rows = (await db.QueryAsync<FileIndexRow>(query, new { hash }))
                                             .Select(x=>x.FromRow());
         List<FileIndexEntry> result = rows.ToList();
         return result;
@@ -81,46 +96,19 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     public async Task UpsertAsync(FileIndexEntry entry, CancellationToken ct = default)
     {
         using IDbConnection db = _connectionFactory.Create();
-        const string query = """
-                                INSERT INTO [FileIndex] ([Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate])
-                                VALUES (@Id, @SourceHash, @FileName, @RelativePath, @FullPath, @Format, @SizeBytes, @Width, @Height, @LastSeenUtc, @LastWriteUtc, @IsDuplicate)
-                                ON CONFLICT([SourceHash]) DO UPDATE SET [FileName]=excluded.[FileName],
-                                                                        [RelativePath]=excluded.[RelativePath],
-                                                                        [FullPath]=excluded.[FullPath],
-                                                                        [Format]=excluded.[Format],
-                                                                        [SizeBytes]=excluded.[SizeBytes],
-                                                                        [Width]=excluded.[Width],
-                                                                        [Height]=excluded.[Height],
-                                                                        [LastSeenUtc]=excluded.[LastSeenUtc],
-                                                                        [LastWriteUtc]=excluded.[LastWriteUtc],
-                                                                        [IsDuplicate]=excluded.[IsDuplicate]
-                             """;
-        await db.ExecuteAsync(query, FileIndexRow.ToRow(entry));
+        await db.ExecuteAsync(UpsertSql, FileIndexRow.ToRow(entry));
     }
 
     public async Task UpsertManyAsync(IReadOnlyCollection<FileIndexEntry> entries, CancellationToken ct = default)
     {
         using IDbConnection db = _connectionFactory.Create();
         using IDbTransaction transaction = db.BeginTransaction();
-        const string query = """
-                                INSERT INTO [FileIndex] ([Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate])
-                                VALUES (@Id, @SourceHash, @FileName, @RelativePath, @FullPath, @Format, @SizeBytes, @Width, @Height, @LastSeenUtc, @LastWriteUtc, @IsDuplicate)
-                                ON CONFLICT([SourceHash]) DO UPDATE SET [FileName]=excluded.[FileName],
-                                                                        [RelativePath]=excluded.[RelativePath],
-                                                                        [FullPath]=excluded.[FullPath],
-                                                                        [Format]=excluded.[Format],
-                                                                        [SizeBytes]=excluded.[SizeBytes],
-                                                                        [Width]=excluded.[Width],
-                                                                        [Height]=excluded.[Height],
-                                                                        [LastSeenUtc]=excluded.[LastSeenUtc],
-                                                                        [LastWriteUtc]=excluded.[LastWriteUtc],
-                                                                        [IsDuplicate]=excluded.[IsDuplicate]
-                             """;
+
         try
         {
             foreach(var entry in entries)
             {
-                await db.ExecuteAsync(query, FileIndexRow.ToRow(entry), transaction);
+                await db.ExecuteAsync(UpsertSql, FileIndexRow.ToRow(entry), transaction);
             }
             transaction.Commit();
         }
@@ -128,7 +116,7 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
         {
             transaction.Rollback();
             throw new InvalidOperationException(
-                $"[SqliteFileIndexRepository.UpsertManyAsync] Transaction failed. SQL: {query}",
+                $"[SqliteFileIndexRepository.UpsertManyAsync] Transaction failed. SQL: {UpsertSql}",
                 ex);
         }
     }
