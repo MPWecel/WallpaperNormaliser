@@ -28,15 +28,19 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
                                                                                 [IsDuplicate]=excluded.[IsDuplicate]
                                      """;
 
+    private const string SelectSql = """
+                                        SELECT [Id], [SourceHash], 
+                                               [FileName], [RelativePath], [FullPath], 
+                                               [Format], [SizeBytes], [Width], [Height], 
+                                               [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                        FROM [FileIndex]
+                                     """;
+
     public async Task<FileIndexEntry?> GetByHashAsync(string hash, CancellationToken cancellationToken = default)
     {
         using IDbConnection db = _connectionFactory.Create();
-        const string queryString = """
-                                      SELECT [Id], [SourceHash], 
-                                             [FileName], [RelativePath], [FullPath], 
-                                             [Format], [SizeBytes], [Width], [Height], 
-                                             [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
-                                      FROM [FileIndex]
+        const string queryString = $"""
+                                      {SelectSql}
                                       WHERE [SourceHash] = @hash
                                    """;
         FileIndexEntry? result = (await db.QuerySingleOrDefaultAsync<FileIndexRow>(queryString, new { hash }))
@@ -47,14 +51,10 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     public async Task<FileIndexEntry?> GetByRelativePathAsync(string relativePath, CancellationToken cancellationToken = default)
     {
         using IDbConnection db = _connectionFactory.Create();
-        const string queryString = """
-                                      SELECT [Id], [SourceHash], 
-                                             [FileName], [RelativePath], [FullPath], 
-                                             [Format], [SizeBytes], [Width], [Height], 
-                                             [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
-                                      FROM [FileIndex]
-                                      WHERE [RelativePath] = @relativePath
-                                   """;
+        const string queryString = $"""
+                                       {SelectSql}
+                                       WHERE [RelativePath] = @relativePath
+                                    """;
         FileIndexEntry? result = (await db.QuerySingleOrDefaultAsync<FileIndexRow>(queryString, new { relativePath }))
                                     ?.FromRow() ?? null;
         return result;
@@ -63,15 +63,11 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     public async Task<IReadOnlyList<FileIndexEntry>> GetDuplicatesAsync(string hash, CancellationToken ct = default)
     {
         using IDbConnection db = _connectionFactory.Create();
-        const string query = """
-                                SELECT [Id], [SourceHash], 
-                                       [FileName], [RelativePath], [FullPath], 
-                                       [Format], [SizeBytes], [Width], [Height], 
-                                       [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
-                                FROM [FileIndex]
-                                WHERE [SourceHash]=@hash
-                             """;
-        IEnumerable<FileIndexEntry> rows = (await db.QueryAsync<FileIndexRow>(query, new { hash }))
+        const string queryString = $"""
+                                       {SelectSql}
+                                       WHERE [SourceHash]=@hash
+                                    """;
+        IEnumerable<FileIndexEntry> rows = (await db.QueryAsync<FileIndexRow>(queryString, new { hash }))
                                             .Select(x=>x.FromRow());
         List<FileIndexEntry> result = rows.ToList();
         return result;
@@ -80,15 +76,12 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     public async Task<IReadOnlyList<FileIndexEntry>> ListAsync(CancellationToken ct = default)
     {
         using IDbConnection db = _connectionFactory.Create();
-        const string query = """
-                                SELECT [Id], [SourceHash], 
-                                       [FileName], [RelativePath], [FullPath], 
-                                       [Format], [SizeBytes], [Width], [Height], 
-                                       [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
-                                FROM [FileIndex]
-                                ORDER BY [RelativePath]
-                             """;
-        IEnumerable<FileIndexEntry> rows = (await db.QueryAsync<FileIndexRow>(query)).Select(x=>x.FromRow());
+        const string queryString = $"""
+                                       {SelectSql}
+                                       ORDER BY [RelativePath]
+                                    """;
+        IEnumerable<FileIndexEntry> rows = (await db.QueryAsync<FileIndexRow>(queryString))
+                                            .Select(x=>x.FromRow());
         List<FileIndexEntry> result = rows.ToList();
         return result;
     }
