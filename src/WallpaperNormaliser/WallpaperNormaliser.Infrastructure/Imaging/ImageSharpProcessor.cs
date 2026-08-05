@@ -27,8 +27,8 @@ public class ImageSharpProcessor : IImageProcessor
 
             double[] scaleAvailableValues = [
                                                 1.0,
-                                                (((double)(options.TargetResolution.Width)) / ((double)(image.Width))),
-                                                (((double)(options.TargetResolution.Height)) / ((double)(image.Height)))
+                                                CalculateScaling(options.TargetResolution.Width, image.Width),
+                                                CalculateScaling(options.TargetResolution.Height, image.Height)
                                             ];
 
             double scale = GetMinValue(scaleAvailableValues);
@@ -46,19 +46,23 @@ public class ImageSharpProcessor : IImageProcessor
 
             int posX = (canvas.Width - newWidth) / 2;
             int posY = (canvas.Height - newHeight) / 2;
+            Point startingPoint = new(posX, posY);
 
-            canvas.Mutate(x => x.DrawImage(image, new Point(posX, posY), 1f));
+            canvas.Mutate(x => x.DrawImage(image, startingPoint, 1f));
 
             using MemoryStream saveStream = new();
+            JpegEncoder encoder = new() { Quality = options.JpegQuality };
 
-            await canvas.SaveAsJpegAsync(saveStream, new JpegEncoder() { Quality = options.JpegQuality }, cancellationToken);
-            TimeSpan duration = DateTime.UtcNow - startDateUtc;
+            await canvas.SaveAsJpegAsync(saveStream, encoder, cancellationToken);
+            TimeSpan duration = GetDuration(startDateUtc);
+            FileFormatInfo targetFileFormat = new(EFileFormat.Jpeg);
+            Resolution targetResolution = new(options.TargetResolution.Width, options.TargetResolution.Height);
 
             ImageProcessingResult result = new(
                                                 EProcessingStatus.Completed,
                                                 saveStream.ToArray(),
-                                                new FileFormatInfo(EFileFormat.Jpeg),
-                                                new Resolution(options.TargetResolution.Width, options.TargetResolution.Height),
+                                                targetFileFormat,
+                                                targetResolution,
                                                 validationMessage,
                                                 null,
                                                 duration
@@ -66,28 +70,41 @@ public class ImageSharpProcessor : IImageProcessor
 
             return result;
         }
-        catch (Exception ex) when (
-            ex is ImageFormatException
-               or UnknownImageFormatException
-               or IOException)
+        catch (Exception ex) when (IsHandledImageException(ex))
         {
-            TimeSpan duration = DateTime.UtcNow - startDateUtc;
-            return new ImageProcessingResult(
-                EProcessingStatus.Failed,
-                OutputBytes:      null,
-                OutputFormat:     new FileFormatInfo(EFileFormat.Unknown),
-                OutputResolution: new Resolution(0, 0),
-                WarningMessage:   null,
-                ErrorMessage:     $"{ex.GetType().Name}: {ex.Message}",
-                Duration:         duration
-            );
+            TimeSpan duration = GetDuration(startDateUtc);
+            FileFormatInfo errorFileFormat = new(EFileFormat.Unknown);
+            Resolution nullResolution = new(0,0);
+            string exceptionMessage = $"{ex.GetType().Name}:\t{ex.Message}";
+
+            ImageProcessingResult result = new(
+                                                  EProcessingStatus.Failed,
+                                                  null,
+                                                  errorFileFormat,
+                                                  nullResolution,
+                                                  null,
+                                                  exceptionMessage,
+                                                  duration
+                                              );
+
+            return result;
         }
     }
 
-    private static double GetMinValue(IEnumerable<double> input) => input.Min();
+    private static TimeSpan GetDuration(DateTime startDateUtc) => (DateTime.UtcNow - startDateUtc);
 
     private static string? ValidateMinimumSize(int width, int height)
-        => (width < 640 || height < 480) ?
-                                         ($"Image resolution may be too low!\tInput resolution: {width}x{height}.\tRecommended minimum resolution: 640x480") :
-                                         (null);
+        => CheckSize(width, height) ? ($"Image resolution may be too low!\tInput resolution: {width}x{height}.\tRecommended minimum resolution: 640x480") : (null);
+
+    private static bool CheckSize(int width, int height) => (width < 640 || height < 480);
+
+    private static double CalculateScaling(uint targetValue, int originalValue)
+        => (((double)(targetValue)) / ((double)(originalValue)));
+
+    private static double GetMinValue(IEnumerable<double> input) => input.Min();
+    
+    private static bool IsHandledImageException(Exception exception)
+        => exception is IOException
+                     or ImageFormatException
+                     or UnknownImageFormatException;
 }
