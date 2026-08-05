@@ -1,5 +1,5 @@
-CREATE INDEX IF NOT EXISTS [IX_FileIndex_SourceHash]
-ON [FileIndex]([SourceHash]);
+--CREATE INDEX IF NOT EXISTS [IX_FileIndex_SourceHash]
+--ON [FileIndex]([SourceHash]);
 
 CREATE INDEX IF NOT EXISTS [IX_FileIndex_LastSeenUtc]
 ON [FileIndex]([LastSeenUtc]);

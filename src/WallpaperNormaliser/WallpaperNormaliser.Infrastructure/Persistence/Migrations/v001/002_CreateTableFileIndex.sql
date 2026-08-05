@@ -13,3 +13,5 @@ CREATE TABLE IF NOT EXISTS [FileIndex]
     [LastWriteUtc] TEXT,
     [IsDuplicate] INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS [UX_FileIndex_SourceHash] ON [FileIndex]([SourceHash]);

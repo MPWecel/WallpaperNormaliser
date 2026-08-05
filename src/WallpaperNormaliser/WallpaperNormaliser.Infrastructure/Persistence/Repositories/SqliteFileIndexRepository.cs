@@ -3,6 +3,8 @@
 using Dapper;
 
 using WallpaperNormaliser.Core.Contracts;
+using WallpaperNormaliser.Core.Enums;
+using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Indexing;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
@@ -11,40 +13,19 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
 {
     private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
-    /*
-     * Rewrite every query against the real schema ([SourceHash], [FileName], [Format], [Width], [Height], [SizeBytes], [LastWriteUtc], [IsDuplicate]). 
-     * Add a UNIQUE constraint or index on [SourceHash] in migration 003, then use ON CONFLICT([SourceHash]). 
-     * Extend FileIndexEntry to carry the columns Dapper needs to map (FileName, Format, LastWriteUtc, IsDuplicate), or split the model into a DTO + a Dapper row record. 
-     * Decompose Resolution into Width/Height parameters at the boundary.
-     */
-
-    /*
-     * CREATE TABLE IF NOT EXISTS [FileIndex]
-     * (
-     *  [Id] TEXT PRIMARY KEY,
-     *  [SourceHash] TEXT NOT NULL,
-     *  [FileName] TEXT NOT NULL,
-     *  [RelativePath] TEXT NOT NULL,
-     *  [FullPath] TEXT,
-     *  [Format] INTEGER NOT NULL,
-     *  [SizeBytes] INTEGER NOT NULL,
-     *  [Width] INTEGER,
-     *  [Height] INTEGER,
-     *  [LastSeenUtc] TEXT NOT NULL,
-     *  [LastWriteUtc] TEXT,
-     *  [IsDuplicate] INTEGER NOT NULL DEFAULT 0
-     * );
-     */
-
     public async Task<FileIndexEntry?> GetByHashAsync(string hash, CancellationToken cancellationToken = default)
     {
         using IDbConnection db = _connectionFactory.Create();
         const string queryString = """
-                                      SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                      SELECT [Id], [SourceHash], 
+                                             [FileName], [RelativePath], [FullPath], 
+                                             [Format], [SizeBytes], [Width], [Height], 
+                                             [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                       FROM [FileIndex]
                                       WHERE [SourceHash] = @SourceHash
                                    """;
-        FileIndexEntry? result = await db.QuerySingleOrDefaultAsync<FileIndexEntry>(queryString, new { SourceHash = hash });
+        FileIndexEntry? result = (await db.QuerySingleOrDefaultAsync<FileIndexRow>(queryString, new { SourceHash = hash }))
+                                    ?.FromRow() ?? null;
         return result;
     }
 
@@ -52,11 +33,15 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string queryString = """
-                                      SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                      SELECT [Id], [SourceHash], 
+                                             [FileName], [RelativePath], [FullPath], 
+                                             [Format], [SizeBytes], [Width], [Height], 
+                                             [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                       FROM [FileIndex]
                                       WHERE [RelativePath] = @relativePath
                                    """;
-        FileIndexEntry? result = await db.QuerySingleOrDefaultAsync<FileIndexEntry>(queryString, new { relativePath });
+        FileIndexEntry? result = (await db.QuerySingleOrDefaultAsync<FileIndexRow>(queryString, new { relativePath }))
+                                    ?.FromRow() ?? null;
         return result;
     }
 
@@ -64,11 +49,15 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string query = """
-                                SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                SELECT [Id], [SourceHash], 
+                                       [FileName], [RelativePath], [FullPath], 
+                                       [Format], [SizeBytes], [Width], [Height], 
+                                       [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                 FROM [FileIndex]
                                 WHERE [SourceHash]=@SourceHash
                              """;
-        IEnumerable<FileIndexEntry> rows = await db.QueryAsync<FileIndexEntry>(query, new { hash });
+        IEnumerable<FileIndexEntry> rows = (await db.QueryAsync<FileIndexRow>(query, new { SourceHash = hash }))
+                                            .Select(x=>x.FromRow());
         List<FileIndexEntry> result = rows.ToList();
         return result;
     }
@@ -77,11 +66,14 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string query = """
-                                SELECT [Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                SELECT [Id], [SourceHash], 
+                                       [FileName], [RelativePath], [FullPath], 
+                                       [Format], [SizeBytes], [Width], [Height], 
+                                       [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
                                 FROM [FileIndex]
                                 ORDER BY [RelativePath]
                              """;
-        IEnumerable<FileIndexEntry> rows = await db.QueryAsync<FileIndexEntry>(query);
+        IEnumerable<FileIndexEntry> rows = (await db.QueryAsync<FileIndexRow>(query)).Select(x=>x.FromRow());
         List<FileIndexEntry> result = rows.ToList();
         return result;
     }
@@ -90,16 +82,20 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         const string query = """
-                                INSERT INTO [FileIndex] ([Id], [SourceHash], [RelativePath], [FullPath], [Width], [Height], [Bytes], [LastSeenUtc])
-                                VALUES (@Id, @SourceHash, @RelativePath, @FullPath, @Width, @Height, @Bytes, @LastSeenUtc)
-                                ON CONFLICT([SourceHash]) DO UPDATE SET [RelativePath]=excluded.[RelativePath],
-                                                                  [FullPath]=excluded.[FullPath],
-                                                                  [Width]=excluded.[Width],
-                                                                  [Height]=excluded.[Height],
-                                                                  [Bytes]=excluded.[Bytes],
-                                                                  [LastSeenUtc]=excluded.[LastSeenUtc]
+                                INSERT INTO [FileIndex] ([Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate])
+                                VALUES (@Id, @SourceHash, @FileName, @RelativePath, @FullPath, @Format, @SizeBytes, @Width, @Height, @LastSeenUtc, @LastWriteUtc, @IsDuplicate)
+                                ON CONFLICT([SourceHash]) DO UPDATE SET [FileName]=excluded.[FileName],
+                                                                        [RelativePath]=excluded.[RelativePath],
+                                                                        [FullPath]=excluded.[FullPath],
+                                                                        [Format]=excluded.[Format],
+                                                                        [SizeBytes]=excluded.[SizeBytes],
+                                                                        [Width]=excluded.[Width],
+                                                                        [Height]=excluded.[Height],
+                                                                        [LastSeenUtc]=excluded.[LastSeenUtc],
+                                                                        [LastWriteUtc]=excluded.[LastWriteUtc],
+                                                                        [IsDuplicate]=excluded.[IsDuplicate]
                              """;
-        await db.ExecuteAsync(query, entry);
+        await db.ExecuteAsync(query, FileIndexRow.ToRow(entry));
     }
 
     public async Task UpsertManyAsync(IReadOnlyCollection<FileIndexEntry> entries, CancellationToken ct = default)
@@ -107,20 +103,24 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
         using IDbConnection db = _connectionFactory.Create();
         using IDbTransaction transaction = db.BeginTransaction();
         const string query = """
-                        INSERT INTO [FileIndex] ([Id], [SourceHash], [RelativePath], [FullPath], [Width], [Height], [Bytes], [LastSeenUtc])
-                        VALUES (@Id, @SourceHash, @RelativePath, @FullPath, @Width, @Height, @Bytes, @LastSeenUtc)
-                        ON CONFLICT([SourceHash]) DO UPDATE SET [RelativePath]=excluded.[RelativePath],
-                                                          [FullPath]=excluded.[FullPath],
-                                                          [Width]=excluded.[Width],
-                                                          [Height]=excluded.[Height],
-                                                          [Bytes]=excluded.[Bytes],
-                                                          [LastSeenUtc]=excluded.[LastSeenUtc]
-                     """;
+                                INSERT INTO [FileIndex] ([Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate])
+                                VALUES (@Id, @SourceHash, @FileName, @RelativePath, @FullPath, @Format, @SizeBytes, @Width, @Height, @LastSeenUtc, @LastWriteUtc, @IsDuplicate)
+                                ON CONFLICT([SourceHash]) DO UPDATE SET [FileName]=excluded.[FileName],
+                                                                        [RelativePath]=excluded.[RelativePath],
+                                                                        [FullPath]=excluded.[FullPath],
+                                                                        [Format]=excluded.[Format],
+                                                                        [SizeBytes]=excluded.[SizeBytes],
+                                                                        [Width]=excluded.[Width],
+                                                                        [Height]=excluded.[Height],
+                                                                        [LastSeenUtc]=excluded.[LastSeenUtc],
+                                                                        [LastWriteUtc]=excluded.[LastWriteUtc],
+                                                                        [IsDuplicate]=excluded.[IsDuplicate]
+                             """;
         try
         {
             foreach(var entry in entries)
             {
-                await db.ExecuteAsync(query, entry, transaction);
+                await db.ExecuteAsync(query, FileIndexRow.ToRow(entry), transaction);
             }
             transaction.Commit();
         }
@@ -158,4 +158,49 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
                 ex);
         }
     }
+    internal sealed record FileIndexRow(
+                                           string Id,
+                                           string SourceHash,
+                                           string FileName,
+                                           string RelativePath,
+                                           string? FullPath,
+                                           int Format,
+                                           long SizeBytes,
+                                           long? Width,
+                                           long? Height,
+                                           DateTime LastSeenUtc,
+                                           DateTime? LastWriteUtc,
+                                           bool IsDuplicate
+                                       )
+    {
+        public FileIndexEntry FromRow() => new(
+                                                  Id, 
+                                                  SourceHash, 
+                                                  FileName, 
+                                                  RelativePath, 
+                                                  FullPath, 
+                                                  (EFileFormat)(Format), 
+                                                  new Resolution((uint)(Width ?? 0), (uint)(Height ?? 0)), 
+                                                  SizeBytes, 
+                                                  LastSeenUtc, 
+                                                  LastWriteUtc, 
+                                                  IsDuplicate
+                                              );
+
+        public static FileIndexRow ToRow(FileIndexEntry entry) => new(
+                                                                         entry.Id,
+                                                                         entry.SourceHash,
+                                                                         entry.FileName,
+                                                                         entry.RelativePath,
+                                                                         entry.FullPath,
+                                                                         (int)(entry.Format),
+                                                                         entry.SizeBytes,
+                                                                         (long?)(entry.Resolution.Width),
+                                                                         (long?)(entry.Resolution.Height),
+                                                                         entry.LastSeenUtc,
+                                                                         entry.LastWriteUtc,
+                                                                         entry.IsDuplicate
+                                                                     );
+    }
 }
+
