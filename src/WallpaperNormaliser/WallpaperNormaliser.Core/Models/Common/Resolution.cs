@@ -21,7 +21,8 @@ public sealed record Resolution(uint Width, uint Height)
         if (!parseResult)
             return null;
 
-        return new Resolution(width, height);
+        Resolution result = new(width, height);
+        return result;
     }
 
     public override string ToString() => $"{Width}x{Height}";

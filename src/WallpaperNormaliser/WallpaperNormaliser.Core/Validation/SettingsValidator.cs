@@ -33,11 +33,11 @@ public sealed class SettingsValidator : ISettingsValidator
         if (settings.LoggingSettings.MaxRows <= 0)
             errors.Add("LoggingSettings.MaxRows must be greater than 0.");
 
-        SettingsValidationResult result = new(errors.Count == 0, errors);
+        SettingsValidationResult result = new((errors.Count == 0), errors);
         return result;
     }
 
     private static bool IsResolutionInvalid(Resolution resolution) => (resolution.Height == 0 || resolution.Width == 0);
 
-    private static bool IsQualityOutOfRange(int quality) => (quality < 1 || quality > 100);
+    private static bool IsQualityOutOfRange(int quality) => (quality is < 1 or > 100);
 }
