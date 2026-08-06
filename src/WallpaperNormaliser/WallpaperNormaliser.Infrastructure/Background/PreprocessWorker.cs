@@ -52,7 +52,7 @@ public sealed class PreprocessWorker(
             FileContext fileContext = new(item.FileName, item.RelativePath, item.FullPath, bytes, item.Format);
             string hash = await hashService.ComputeAsync(fileContext, cancellationToken);
 
-            PreprocessCacheEntry? existing = await cacheRepository.GetAsync(hash, cancellationToken);
+            PreprocessCacheEntry? existing = await cacheRepository.GetAsync(hash, settings.Resolution, settings.Quality, cancellationToken);
             if (existing is not null)
                 continue;
 

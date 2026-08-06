@@ -1,4 +1,5 @@
 using WallpaperNormaliser.Core.Contracts;
+using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Core.Models.Settings;
 
 namespace WallpaperNormaliser.Core.Validation;
@@ -8,13 +9,13 @@ public sealed class SettingsValidator : ISettingsValidator
     {
         List<string> errors = new();
 
-        if (string.IsNullOrWhiteSpace(settings.RootDirectory))
+        if (String.IsNullOrWhiteSpace(settings.RootDirectory))
             errors.Add("RootDirectory must not be empty.");
 
-        if (settings.Resolution.Width == 0 || settings.Resolution.Height == 0)
+        if (IsResolutionInvalid(settings.Resolution))
             errors.Add("Resolution width and height must be greater than 0.");
 
-        if (settings.Quality < 1 || settings.Quality > 100)
+        if (IsQualityOutOfRange(settings.Quality))
             errors.Add("Quality must be between 1 and 100.");
 
         if (settings.ScanSettings.DebounceMilliseconds < 0)
@@ -32,6 +33,11 @@ public sealed class SettingsValidator : ISettingsValidator
         if (settings.LoggingSettings.MaxRows <= 0)
             errors.Add("LoggingSettings.MaxRows must be greater than 0.");
 
-        return new SettingsValidationResult(errors.Count == 0, errors);
+        SettingsValidationResult result = new(errors.Count == 0, errors);
+        return result;
     }
+
+    private static bool IsResolutionInvalid(Resolution resolution) => (resolution.Height == 0 || resolution.Width == 0);
+
+    private static bool IsQualityOutOfRange(int quality) => (quality < 1 || quality > 100);
 }

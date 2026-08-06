@@ -14,8 +14,20 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
     private const string UpsertSql = """
-                                        INSERT INTO [FileIndex] ([Id], [SourceHash], [FileName], [RelativePath], [FullPath], [Format], [SizeBytes], [Width], [Height], [LastSeenUtc], [LastWriteUtc], [IsDuplicate])
-                                        VALUES (@Id, @SourceHash, @FileName, @RelativePath, @FullPath, @Format, @SizeBytes, @Width, @Height, @LastSeenUtc, @LastWriteUtc, @IsDuplicate)
+                                        INSERT INTO [FileIndex] 
+                                            (
+                                                [Id], [SourceHash], 
+                                                [FileName], [RelativePath], [FullPath], 
+                                                [Format], [SizeBytes], [Width], [Height], 
+                                                [LastSeenUtc], [LastWriteUtc], [IsDuplicate]
+                                            )
+                                        VALUES 
+                                            (
+                                                @Id, @SourceHash, 
+                                                @FileName, @RelativePath, @FullPath, 
+                                                @Format, @SizeBytes, @Width, @Height, 
+                                                @LastSeenUtc, @LastWriteUtc, @IsDuplicate
+                                            )
                                         ON CONFLICT([SourceHash]) DO UPDATE SET [FileName]=excluded.[FileName],
                                                                                 [RelativePath]=excluded.[RelativePath],
                                                                                 [FullPath]=excluded.[FullPath],
@@ -118,12 +130,12 @@ public sealed class SqliteFileIndexRepository(SqliteConnectionFactory connection
     {
         using IDbConnection db = _connectionFactory.Create();
         using IDbTransaction transaction = db.BeginTransaction();
-        const string selecthPathsQuery = "SELECT [RelativePath] FROM [FileIndex]";
+        const string selectPathsQuery = "SELECT [RelativePath] FROM [FileIndex]";
         const string deleteCommand = "DELETE FROM [FileIndex] WHERE [RelativePath]=@path";
 
         try
         {
-            IEnumerable<string> all = await db.QueryAsync<string>(selecthPathsQuery);
+            IEnumerable<string> all = await db.QueryAsync<string>(selectPathsQuery);
             IEnumerable<string> remove = all.Except(existingRelativePaths);
 
             foreach (var path in remove)

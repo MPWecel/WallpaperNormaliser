@@ -1,9 +1,10 @@
-﻿using System.Data;
+using System.Data;
 
 using Dapper;
 
 using WallpaperNormaliser.Core.Contracts;
 using WallpaperNormaliser.Core.Models.Cache;
+using WallpaperNormaliser.Core.Models.Common;
 using WallpaperNormaliser.Infrastructure.Persistence.Database;
 
 namespace WallpaperNormaliser.Infrastructure.Persistence.Repositories;
@@ -12,42 +13,62 @@ public sealed class SqlitePreprocessCacheRepository(SqliteConnectionFactory conn
 {
     private readonly SqliteConnectionFactory _connectionFactory = connectionFactory;
 
-    public async Task<PreprocessCacheEntry?> GetAsync(string sourceHash, CancellationToken cancellationToken = default)
+    private const string SelectSql = """
+                                        SELECT [SourceHash], [Resolution], [JpegQuality], [OutputBytes], 
+                                               [CreatedUtc], [ExpiresUtc]
+                                        FROM [PreprocessCache]
+                                     """;
+
+    private const string UpsertSql = """
+                                        INSERT INTO [PreprocessCache]
+                                            (
+                                                [SourceHash], [Resolution], [JpegQuality], [OutputBytes], 
+                                                [CreatedUtc], [ExpiresUtc]
+                                            )
+                                        VALUES
+                                            (
+                                                @SourceHash, @Resolution, @JpegQuality, @OutputBytes, 
+                                                @CreatedUtc, @ExpiresUtc
+                                            )
+                                        ON CONFLICT([SourceHash], [Resolution], [JpegQuality]) DO UPDATE SET [OutputBytes] = excluded.[OutputBytes],
+                                                                                                             [CreatedUtc] = excluded.[CreatedUtc],
+                                                                                                             [ExpiresUtc] = excluded.[ExpiresUtc]
+                                     """;
+
+    public async Task<PreprocessCacheEntry?> GetAsync(string sourceHash, Resolution resolution, int quality, CancellationToken cancellationToken = default)
     {
         using IDbConnection dbConn = _connectionFactory.Create();
-        const string selectScript = """
-                                       SELECT [SourceHash], [Resolution], [JpegQuality], [OutputBytes], [CreatedUtc], [ExpiresUtc] 
-                                       FROM [PreprocessCache] 
-                                       WHERE [SourceHash] = @sourceHash
+        const string selectScript = $"""
+                                       {SelectSql}
+                                       WHERE [SourceHash] = @SourceHash
+                                         AND [Resolution] = @Resolution
+                                         AND [JpegQuality] = @JpegQuality
                                     """;
-        PreprocessCacheEntry? result = await dbConn.QueryFirstOrDefaultAsync<PreprocessCacheEntry>(selectScript, new { sourceHash });
+        PreprocessCacheEntry? result = await dbConn.QueryFirstOrDefaultAsync<PreprocessCacheEntry>(
+                                                                                                      selectScript,
+                                                                                                      new
+                                                                                                      {
+                                                                                                          SourceHash  = sourceHash,
+                                                                                                          Resolution  = resolution,
+                                                                                                          JpegQuality = quality
+                                                                                                      }
+                                                                                                  );
         return result;
     }
 
     public async Task UpsertAsync(PreprocessCacheEntry entry, CancellationToken cancellationToken = default)
     {
         using IDbConnection dbConn = _connectionFactory.Create();
-        const string upsertScript = """
-                                       INSERT INTO [PreprocessCache]
-                                           ([SourceHash], [Width], [Height], [Quality], [Bytes], [CreatedUtc], [ExpiresUtc])
-                                       VALUES
-                                           (@SourceHash, @Width, @Height, @Quality, @Bytes, @CreatedUtc, @ExpiresUtc)
-                                       ON CONFLICT([SourceHash],[Width],[Height],[Quality])
-                                           DO UPDATE SET [Bytes]=excluded.[Bytes],
-                                                         [CreatedUtc]=excluded.[CreatedUtc],
-                                                         [ExpiresUtc]=excluded.[ExpiresUtc]
-                                    """;
         await dbConn.ExecuteAsync(
-                                     upsertScript, 
-                                     new 
-                                     { 
-                                         SourceHash = entry.SourceHash, 
-                                         Width = entry.Resolution.Width, 
-                                         Height = entry.Resolution.Height, 
-                                         Quality = entry.Quality, 
-                                         Bytes = entry.OutputBytes, 
-                                         CreatedUtc = entry.CreatedUtc, 
-                                         ExpiresUtc = entry.ExpiresUtc 
+                                     UpsertSql,
+                                     new
+                                     {
+                                         SourceHash = entry.SourceHash,
+                                         Resolution = entry.Resolution,
+                                         JpegQuality = entry.Quality,
+                                         OutputBytes = entry.OutputBytes,
+                                         CreatedUtc = entry.CreatedUtc,
+                                         ExpiresUtc = entry.ExpiresUtc
                                      }
                                  );
     }
@@ -55,7 +76,7 @@ public sealed class SqlitePreprocessCacheRepository(SqliteConnectionFactory conn
     public async Task RemoveByHashAsync(string sourceHash, CancellationToken cancellationToken = default)
     {
         using IDbConnection dbConn = _connectionFactory.Create();
-        const string deleteScript = "DELETE FROM [PreprocessCache] WHERE [SourceHash]=@sourceHash";
+        const string deleteScript = "DELETE FROM [PreprocessCache] WHERE [SourceHash] = @sourceHash";
         await dbConn.ExecuteAsync(deleteScript, new { sourceHash });
     }
 
