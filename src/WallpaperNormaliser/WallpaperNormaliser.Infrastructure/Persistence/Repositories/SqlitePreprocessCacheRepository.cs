@@ -21,21 +21,26 @@ public sealed class SqlitePreprocessCacheRepository(SqliteConnectionFactory conn
 
     private const string UpsertSql = """
                                         INSERT INTO [PreprocessCache]
-                                            (
-                                                [SourceHash], [Resolution], [JpegQuality], [OutputBytes], 
-                                                [CreatedUtc], [ExpiresUtc]
-                                            )
+                                        (
+                                            [SourceHash], [Resolution], [JpegQuality], [OutputBytes], 
+                                            [CreatedUtc], [ExpiresUtc]
+                                        )
                                         VALUES
-                                            (
-                                                @SourceHash, @Resolution, @JpegQuality, @OutputBytes, 
-                                                @CreatedUtc, @ExpiresUtc
-                                            )
+                                        (
+                                            @SourceHash, @Resolution, @JpegQuality, @OutputBytes, 
+                                            @CreatedUtc, @ExpiresUtc
+                                        )
                                         ON CONFLICT([SourceHash], [Resolution], [JpegQuality]) DO UPDATE SET [OutputBytes] = excluded.[OutputBytes],
                                                                                                              [CreatedUtc] = excluded.[CreatedUtc],
                                                                                                              [ExpiresUtc] = excluded.[ExpiresUtc]
                                      """;
 
-    public async Task<PreprocessCacheEntry?> GetAsync(string sourceHash, Resolution resolution, int quality, CancellationToken cancellationToken = default)
+    public async Task<PreprocessCacheEntry?> GetAsync(
+                                                         string sourceHash, 
+                                                         Resolution resolution, 
+                                                         int quality, 
+                                                         CancellationToken cancellationToken = default
+                                                     )
     {
         using IDbConnection dbConn = _connectionFactory.Create();
         const string selectScript = $"""
@@ -44,15 +49,16 @@ public sealed class SqlitePreprocessCacheRepository(SqliteConnectionFactory conn
                                          AND [Resolution] = @Resolution
                                          AND [JpegQuality] = @JpegQuality
                                     """;
-        PreprocessCacheEntry? result = await dbConn.QueryFirstOrDefaultAsync<PreprocessCacheEntry>(
-                                                                                                      selectScript,
-                                                                                                      new
-                                                                                                      {
-                                                                                                          SourceHash  = sourceHash,
-                                                                                                          Resolution  = resolution,
-                                                                                                          JpegQuality = quality
-                                                                                                      }
-                                                                                                  );
+        PreprocessCacheEntry? result = 
+            await dbConn.QueryFirstOrDefaultAsync<PreprocessCacheEntry>(
+                                                                           selectScript,
+                                                                           new
+                                                                           {
+                                                                               SourceHash  = sourceHash,
+                                                                               Resolution  = resolution,
+                                                                               JpegQuality = quality
+                                                                           }
+                                                                       );
         return result;
     }
 

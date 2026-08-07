@@ -61,8 +61,16 @@ public sealed class SqliteRunRepository(SqliteConnectionFactory connectionFactor
     {
         using IDbConnection dbConn = _connectionFactory.Create();
         const string insertScript = """
-                                       INSERT INTO [ProcessingRuns] ([RunId], [StartedUtc], [FinishedUtc], [Status], [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount])
-                                       VALUES (@RunId, @StartedUtc, @FinishedUtc, @TotalFiles, @SuccessCount, @FailedCount, @SkippedCount)
+                                       INSERT INTO [ProcessingRuns] 
+                                       (
+                                           [RunId], [StartedUtc], [FinishedUtc], [Status], 
+                                           [TotalFiles], [SuccessCount], [FailedCount], [SkippedCount]
+                                       )
+                                       VALUES 
+                                       (
+                                           @RunId, @StartedUtc, @FinishedUtc, @Status, 
+                                           @TotalFiles, @SuccessCount, @FailedCount, @SkippedCount
+                                       )
                                     """;
         await dbConn.ExecuteAsync(insertScript, run);
     }
